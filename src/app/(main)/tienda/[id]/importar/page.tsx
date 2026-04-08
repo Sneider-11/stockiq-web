@@ -1,0 +1,40 @@
+import { notFound } from 'next/navigation';
+import { dbGetTiendas, dbGetCatalogo } from '@/lib/db';
+import { ArrowLeft, Package } from 'lucide-react';
+import Link from 'next/link';
+import { ImportarClient } from './ImportarClient';
+
+interface Props { params: Promise<{ id: string }> }
+
+export default async function ImportarPage({ params }: Props) {
+  const { id } = await params;
+  const [tiendas, catalogo] = await Promise.all([
+    dbGetTiendas(),
+    dbGetCatalogo(id),
+  ]);
+  const tienda = tiendas.find(t => t.id === id);
+  if (!tienda) notFound();
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
+        <Link href={`/tienda/${id}`} className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-all">
+          <ArrowLeft size={18} />
+        </Link>
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
+            style={{ backgroundColor: tienda.color }}
+          >
+            <Package size={16} />
+          </div>
+          <div>
+            <h1 className="text-lg font-black text-zinc-100">Importar catálogo TNS</h1>
+            <p className="text-xs text-zinc-500">{tienda.nombre}</p>
+          </div>
+        </div>
+      </div>
+      <ImportarClient tiendaId={id} tiendaColor={tienda.color} catalogoActual={catalogo} />
+    </div>
+  );
+}

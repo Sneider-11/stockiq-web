@@ -1,0 +1,243 @@
+import { supabase } from './supabase';
+import type { Tienda, Usuario, Articulo, Registro, SobranteSinStock, TiendaStats } from '../types';
+
+// ─── TIENDAS ──────────────────────────────────────────────────────────────────
+
+export async function dbGetTiendas(): Promise<Tienda[]> {
+  const { data, error } = await supabase
+    .from('tiendas')
+    .select('*')
+    .order('creado_en');
+  if (error || !data) return [];
+  return data.map(r => ({
+    id:             r.id,
+    nombre:         r.nombre,
+    icono:          r.icono  ?? 'storefront',
+    color:          r.color  ?? '#09090B',
+    nit:            r.nit    ?? undefined,
+    modoInventario: r.modo_inventario ?? undefined,
+    cerradoPor:     r.cerrado_por    ?? undefined,
+  }));
+}
+
+export async function dbUpsertTienda(t: Tienda): Promise<void> {
+  await supabase.from('tiendas').upsert(
+    { id: t.id, nombre: t.nombre, icono: t.icono, color: t.color, nit: t.nit ?? null },
+    { onConflict: 'id' },
+  );
+}
+
+export async function dbDeleteTienda(id: string): Promise<void> {
+  await supabase.from('tiendas').delete().eq('id', id);
+}
+
+// ─── USUARIOS ─────────────────────────────────────────────────────────────────
+
+function migrateRol(rol: string): Usuario['rol'] {
+  if (rol === 'AUDITOR') return 'ADMIN';
+  return rol as Usuario['rol'];
+}
+
+export async function dbGetUsuarios(): Promise<Usuario[]> {
+  const { data, error } = await supabase
+    .from('usuarios')
+    .select('id,cedula,nombre,rol,tiendas,tiendas_roles,telefono,activo,creado_por,pass_web');
+  if (error || !data) return [];
+  return data.map(r => ({
+    id:           r.id,
+    cedula:       r.cedula,
+    nombre:       r.nombre,
+    rol:          migrateRol(r.rol),
+    tiendas:      r.tiendas       ?? [],
+    tiendasRoles: r.tiendas_roles ?? {},
+    telefono:     r.telefono      ?? undefined,
+    activo:       r.activo        ?? true,
+    creadoPor:    r.creado_por    ?? undefined,
+    passWeb:      r.pass_web      ?? null,
+  }));
+}
+
+export async function dbGetUsuarioByCedula(cedula: string): Promise<Usuario | null> {
+  const { data, error } = await supabase
+    .from('usuarios')
+    .select('id,cedula,nombre,rol,tiendas,tiendas_roles,telefono,activo,creado_por,pass_web')
+    .eq('cedula', cedula)
+    .single();
+  if (error || !data) return null;
+  return {
+    id:           data.id,
+    cedula:       data.cedula,
+    nombre:       data.nombre,
+    rol:          migrateRol(data.rol),
+    tiendas:      data.tiendas       ?? [],
+    tiendasRoles: data.tiendas_roles ?? {},
+    telefono:     data.telefono      ?? undefined,
+    activo:       data.activo        ?? true,
+    creadoPor:    data.creado_por    ?? undefined,
+    passWeb:      data.pass_web      ?? null,
+  };
+}
+
+export async function dbSetPassWeb(userId: string, passHash: string): Promise<void> {
+  await supabase.from('usuarios').update({ pass_web: passHash }).eq('id', userId);
+}
+
+export async function dbUpsertUsuario(u: Omit<Usuario, 'passWeb'>): Promise<void> {
+  await supabase.from('usuarios').upsert(
+    {
+      id:            u.id,
+      cedula:        u.cedula,
+      nombre:        u.nombre,
+      rol:           u.rol,
+      tiendas:       u.tiendas,
+      tiendas_roles: u.tiendasRoles ?? {},
+      telefono:      u.telefono ?? null,
+      activo:        u.activo ?? true,
+      creado_por:    u.creadoPor ?? null,
+    },
+    { onConflict: 'id' },
+  );
+}
+
+export async function dbDeleteUsuario(id: string): Promise<void> {
+  await supabase.from('usuarios').delete().eq('id', id);
+}
+
+// ─── REGISTROS ────────────────────────────────────────────────────────────────
+
+export async function dbGetRegistros(tiendaId?: string): Promise<Registro[]> {
+  let query = supabase
+    .from('registros')
+    .select('*')
+    .order('escaneado_en', { ascending: false });
+  if (tiendaId) query = query.eq('tienda_id', tiendaId);
+  const { data, error } = await query;
+  if (error || !data) return [];
+  return data.map(r => ({
+    id:            r.id,
+    tiendaId:      r.tienda_id,
+    itemId:        r.item_id,
+    descripcion:   r.descripcion,
+    ubicacion:     r.ubicacion,
+    stockSistema:  r.stock_sistema,
+    costoUnitario: r.costo_unitario,
+    cantidad:      r.cantidad,
+    nota:          r.nota          ?? '',
+    fotoUri:       r.foto_uri      ?? null,
+    usuarioNombre: r.usuario_nombre,
+    escaneadoEn:   r.escaneado_en,
+    clasificacion: r.clasificacion,
+  }));
+}
+
+export async function dbDeleteRegistro(id: string): Promise<void> {
+  await supabase.from('registros').delete().eq('id', id);
+}
+
+export async function dbLimpiarRegistrosTienda(tiendaId: string): Promise<void> {
+  await supabase.from('registros').delete().eq('tienda_id', tiendaId);
+}
+
+// ─── CATÁLOGOS ────────────────────────────────────────────────────────────────
+
+export async function dbGetCatalogo(tiendaId: string): Promise<Articulo[]> {
+  const { data, error } = await supabase
+    .from('catalogos')
+    .select('*')
+    .eq('tienda_id', tiendaId);
+  if (error || !data) return [];
+  return data.map(r => ({
+    itemId:      r.item_id,
+    descripcion: r.descripcion,
+    ubicacion:   r.ubicacion,
+    stock:       r.stock,
+    costo:       r.costo,
+  }));
+}
+
+export async function dbUpsertCatalogo(tiendaId: string, articulos: Articulo[]): Promise<void> {
+  await supabase.from('catalogos').delete().eq('tienda_id', tiendaId);
+  if (!articulos.length) return;
+  await supabase.from('catalogos').insert(
+    articulos.map(a => ({
+      tienda_id:   tiendaId,
+      item_id:     a.itemId,
+      descripcion: a.descripcion,
+      ubicacion:   a.ubicacion,
+      stock:       a.stock,
+      costo:       a.costo,
+    })),
+  );
+}
+
+// ─── SOBRANTES ────────────────────────────────────────────────────────────────
+
+export async function dbGetSobrantes(tiendaId?: string): Promise<SobranteSinStock[]> {
+  let query = supabase
+    .from('sobrantes')
+    .select('*')
+    .order('creado_en', { ascending: false });
+  if (tiendaId) query = query.eq('tienda_id', tiendaId);
+  const { data, error } = await query;
+  if (error || !data) return [];
+  return data.map(r => ({
+    id:            r.id,
+    tiendaId:      r.tienda_id,
+    codigo:        r.codigo,
+    descripcion:   r.descripcion,
+    ubicacion:     r.ubicacion,
+    fotoUri:       r.foto_uri      ?? '',
+    estado:        r.estado,
+    precio:        r.precio,
+    cantidad:      r.cantidad,
+    usuarioNombre: r.usuario_nombre,
+    registradoEn:  r.registrado_en,
+  }));
+}
+
+// ─── ESTADÍSTICAS (calculadas) ────────────────────────────────────────────────
+
+export async function dbGetTiendasConStats(): Promise<TiendaStats[]> {
+  const [tiendas, registros, catalogosRaw] = await Promise.all([
+    dbGetTiendas(),
+    dbGetRegistros(),
+    supabase.from('catalogos').select('tienda_id'),
+  ]);
+
+  const catalogoCount: Record<string, number> = {};
+  if (catalogosRaw.data) {
+    for (const r of catalogosRaw.data) {
+      catalogoCount[r.tienda_id] = (catalogoCount[r.tienda_id] ?? 0) + 1;
+    }
+  }
+
+  return tiendas.map(tienda => {
+    const regs = registros.filter(r => r.tiendaId === tienda.id);
+    const total = catalogoCount[tienda.id] ?? 0;
+
+    const faltantes    = regs.filter(r => r.clasificacion === 'FALTANTE');
+    const sobrantes    = regs.filter(r => r.clasificacion === 'SOBRANTE');
+    const sinDiferencia = regs.filter(r => r.clasificacion === 'SIN_DIF').length;
+    const ceros        = regs.filter(r => r.clasificacion === 'CERO').length;
+
+    const valorFaltante = faltantes.reduce(
+      (acc, r) => acc + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0
+    );
+    const valorSobrante = sobrantes.reduce(
+      (acc, r) => acc + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0
+    );
+
+    return {
+      tienda,
+      totalCatalogo:  total,
+      totalRegistros: regs.length,
+      progreso:       total > 0 ? Math.round((regs.length / total) * 100) : 0,
+      valorFaltante,
+      valorSobrante,
+      faltantes:      faltantes.length,
+      sobrantes:      sobrantes.length,
+      sinDiferencia,
+      ceros,
+    };
+  });
+}
