@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: 'StockIQ — Plataforma de Auditoría',
-  description: 'Plataforma web de gestión y reportes para auditorías de inventario — Grupo Comercial AudiMeyer',
+  description: 'Plataforma web de gestión y reportes para auditorías de inventario - Grupo Orvion Tech',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

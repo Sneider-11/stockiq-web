@@ -256,7 +256,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-[11px] text-zinc-700 mt-6">
-          StockIQ — Grupo Comercial AudiMeyer · 2026
+          StockIQ - Grupo Orvion Tech · 2026
         </p>
       </div>
     </div>
