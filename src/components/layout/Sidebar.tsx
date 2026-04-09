@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Scan, BarChart2, FileText,
-  Users, Store, User, LogOut, ChevronRight, Layers,
+  LayoutDashboard, Users, Store, User, LogOut,
+  ChevronRight, Layers, BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SessionUser } from '@/types';
@@ -17,10 +17,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/',         label: 'Inicio',         icon: <LayoutDashboard size={18} /> },
-  { href: '/equipo',   label: 'Equipo',          icon: <Users  size={18} />, roles: ['SUPERADMIN', 'ADMIN'] },
-  { href: '/tiendas',  label: 'Tiendas',         icon: <Store  size={18} />, roles: ['SUPERADMIN'] },
-  { href: '/perfil',   label: 'Mi Perfil',       icon: <User   size={18} /> },
+  { href: '/',             label: 'Inicio',                icon: <LayoutDashboard size={18} /> },
+  { href: '/consolidado',  label: 'Consolidado',           icon: <BarChart3 size={18} />, roles: ['SUPERADMIN', 'ADMIN'] },
+  { href: '/equipo',       label: 'Equipo',                icon: <Users  size={18} />, roles: ['SUPERADMIN', 'ADMIN'] },
+  { href: '/tiendas',      label: 'Tiendas',               icon: <Store  size={18} />, roles: ['SUPERADMIN'] },
+  { href: '/perfil',       label: 'Mi Perfil',             icon: <User   size={18} /> },
 ];
 
 interface Props {

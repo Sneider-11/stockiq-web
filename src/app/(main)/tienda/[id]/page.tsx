@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { dbGetTiendas, dbGetRegistros, dbGetCatalogo, dbGetSobrantes } from '@/lib/db';
 import { formatCOP } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
+import { DescargarTiendaBtn } from '@/components/ui/DescargarTiendaBtn';
 import {
-  ArrowLeft, Package, TrendingDown, TrendingUp,
-  CheckCircle2, FileBarChart, Upload, List,
-  AlertTriangle, ScanLine,
+  ArrowLeft, Boxes, TrendingDown, TrendingUp,
+  CheckCircle2, BarChart2, Upload, ClipboardList,
+  AlertTriangle, ScanLine, Hash, ChevronRight,
 } from 'lucide-react';
 import type { Registro } from '@/types';
 
@@ -37,51 +38,61 @@ export default async function TiendaPage({ params }: Props) {
   const total    = catalogo.length;
   const progreso = total > 0 ? Math.round((registros.length / total) * 100) : 0;
 
-  const faltantes     = registros.filter(r => r.clasificacion === 'FALTANTE');
-  const sobrReg       = registros.filter(r => r.clasificacion === 'SOBRANTE');
-  const sinDif        = registros.filter(r => r.clasificacion === 'SIN_DIF');
-  const ceros         = registros.filter(r => r.clasificacion === 'CERO');
-  const valorFaltante = faltantes.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
-  const valorSobrante = sobrReg.reduce((a, r)   => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
+  const faltantes      = registros.filter(r => r.clasificacion === 'FALTANTE');
+  const sobrReg        = registros.filter(r => r.clasificacion === 'SOBRANTE');
+  const sinDif         = registros.filter(r => r.clasificacion === 'SIN_DIF');
+  const ceros          = registros.filter(r => r.clasificacion === 'CERO');
+  const valorFaltante  = faltantes.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
+  const valorSobrante  = sobrReg.reduce((a, r)   => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
 
   const barColor = progreso >= 80 ? '#10B981' : progreso >= 40 ? '#F59E0B' : '#EF4444';
 
   const quickLinks = [
-    { href: `/tienda/${id}/resultados`, label: 'Resultados',     icon: <FileBarChart size={18} />, desc: 'Comparativa sistema vs contado' },
-    { href: `/tienda/${id}/registros`,  label: 'Registros',      icon: <List size={18} />,         desc: `${registros.length} artículos escaneados` },
-    { href: `/tienda/${id}/importar`,   label: 'Importar Excel', icon: <Upload size={18} />,       desc: `Catálogo TNS · ${total} artículos` },
-    { href: `/tienda/${id}/sobrantes`,  label: 'Sobrantes',      icon: <AlertTriangle size={18} />, desc: `${sobrantes.length} sin stock` },
+    { href: `/tienda/${id}/resultados`, label: 'Resultados',     icon: <BarChart2 size={18} />,      desc: 'Comparativa sistema vs contado' },
+    { href: `/tienda/${id}/registros`,  label: 'Registros',      icon: <ClipboardList size={18} />,  desc: `${registros.length} artículos escaneados` },
+    { href: `/tienda/${id}/importar`,   label: 'Importar Excel', icon: <Upload size={18} />,         desc: `Catálogo TNS · ${total} artículos` },
+    { href: `/tienda/${id}/sobrantes`,  label: 'Sobrantes',      icon: <AlertTriangle size={18} />,  desc: `${sobrantes.length} sin stock en sistema` },
   ];
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Back + header */}
-      <div className="flex items-center gap-3 mb-6">
+    <div className="max-w-6xl mx-auto page-enter">
+      {/* ── Back + header ── */}
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
         <Link href="/" className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-all">
           <ArrowLeft size={18} />
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0"
             style={{ backgroundColor: tienda.color, boxShadow: `0 4px 14px ${tienda.color}55` }}
           >
-            <Package size={18} />
+            <Boxes size={18} />
           </div>
-          <div>
-            <h1 className="text-xl font-black text-zinc-100 tracking-tight">{tienda.nombre}</h1>
-            {tienda.nit && <p className="text-xs text-zinc-500">NIT: {tienda.nit}</p>}
+          <div className="min-w-0">
+            <h1 className="text-xl font-black text-zinc-100 tracking-tight truncate">{tienda.nombre}</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              {tienda.nit && (
+                <span className="flex items-center gap-1 text-xs text-zinc-500">
+                  <Hash size={11} />
+                  {tienda.nit}
+                </span>
+              )}
+              <span className="text-xs text-zinc-600">·</span>
+              <span className="text-xs text-zinc-500">{total} artículos en catálogo</span>
+            </div>
           </div>
         </div>
-        <div className="ml-auto">
+        <div className="flex items-center gap-2 ml-auto">
           {tienda.modoInventario === 'OFFLINE'
             ? <Badge variant="danger">Inventario cerrado</Badge>
             : <Badge variant="success">Activo</Badge>}
+          <DescargarTiendaBtn registros={registros} tiendaNombre={tienda.nombre} />
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/60 p-5 mb-6">
-        <div className="flex items-center justify-between mb-2">
+      {/* ── Progress bar ── */}
+      <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/60 p-5 mb-5">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <ScanLine size={16} className="text-zinc-500" />
             <span className="text-sm font-semibold text-zinc-300">Progreso de conteo</span>
@@ -96,17 +107,17 @@ export default async function TiendaPage({ params }: Props) {
         </div>
         <div className="flex justify-between text-xs text-zinc-600">
           <span>{registros.length} artículos escaneados</span>
-          <span>{total} en catálogo</span>
+          <span>{total > 0 ? `${total - registros.length} pendientes` : 'Sin catálogo cargado'}</span>
         </div>
       </div>
 
-      {/* Stats grid */}
+      {/* ── Stats grid ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Sin diferencia', value: sinDif.length,    icon: <CheckCircle2 size={16} />, color: 'text-vlt',          bg: 'bg-purple-950/30 border-purple-900/40' },
-          { label: 'Faltantes',      value: faltantes.length, icon: <TrendingDown  size={16} />, color: 'text-red-400',       bg: 'bg-red-950/30 border-red-900/40', sub: formatCOP(valorFaltante) },
-          { label: 'Sobrantes',      value: sobrReg.length,   icon: <TrendingUp    size={16} />, color: 'text-emerald-400',   bg: 'bg-emerald-950/30 border-emerald-900/40', sub: formatCOP(valorSobrante) },
-          { label: 'Ceros',          value: ceros.length,     icon: <AlertTriangle size={16} />, color: 'text-amber-400',     bg: 'bg-amber-950/30 border-amber-900/40' },
+          { label: 'Sin diferencia', value: sinDif.length,    icon: <CheckCircle2 size={16} />, color: 'text-vlt',        bg: 'bg-purple-950/30 border-purple-900/40' },
+          { label: 'Faltantes',      value: faltantes.length, icon: <TrendingDown  size={16} />, color: 'text-red-400',     bg: 'bg-red-950/30 border-red-900/40',       sub: formatCOP(valorFaltante) },
+          { label: 'Sobrantes',      value: sobrReg.length,   icon: <TrendingUp    size={16} />, color: 'text-emerald-400', bg: 'bg-emerald-950/30 border-emerald-900/40', sub: formatCOP(valorSobrante) },
+          { label: 'Ceros',          value: ceros.length,     icon: <AlertTriangle size={16} />, color: 'text-amber-400',   bg: 'bg-amber-950/30 border-amber-900/40' },
         ].map((s, i) => (
           <div key={i} className={`rounded-xl border p-4 ${s.bg}`}>
             <div className={`${s.color} mb-2`}>{s.icon}</div>
@@ -117,31 +128,31 @@ export default async function TiendaPage({ params }: Props) {
         ))}
       </div>
 
-      {/* Quick links */}
+      {/* ── Quick links ── */}
       <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Acciones</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
         {quickLinks.map(link => (
           <Link
             key={link.href}
             href={link.href}
-            className="group flex items-center gap-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/60 hover:border-zinc-700 hover:bg-zinc-900 p-4 transition-all"
+            className="group flex items-center gap-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/60 hover:border-zinc-700 hover:bg-zinc-900 p-4 transition-all duration-200"
           >
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0"
-              style={{ backgroundColor: tienda.color + '33', border: `1px solid ${tienda.color}55` }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all group-hover:scale-105"
+              style={{ backgroundColor: tienda.color + '25', border: `1px solid ${tienda.color}45` }}
             >
               <span style={{ color: tienda.color }}>{link.icon}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-zinc-100 group-hover:text-white">{link.label}</p>
+              <p className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors">{link.label}</p>
               <p className="text-xs text-zinc-500 truncate">{link.desc}</p>
             </div>
-            <ArrowLeft size={16} className="text-zinc-600 group-hover:text-zinc-400 rotate-180 transition-all" />
+            <ChevronRight size={16} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
           </Link>
         ))}
       </div>
 
-      {/* Recent scans */}
+      {/* ── Últimos escaneos ── */}
       {registros.length > 0 && (
         <>
           <div className="flex items-center justify-between mb-3">
@@ -152,7 +163,7 @@ export default async function TiendaPage({ params }: Props) {
           </div>
           <div className="space-y-2">
             {registros.slice(0, 8).map(r => (
-              <div key={r.id} className="flex items-center gap-3 rounded-xl bg-zinc-900/40 border border-zinc-800/40 px-4 py-3">
+              <div key={r.id} className="flex items-center gap-3 rounded-xl bg-zinc-900/40 border border-zinc-800/40 px-4 py-3 hover:bg-zinc-900/60 transition-colors">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-zinc-200 font-medium truncate">{r.descripcion}</p>
                   <p className="text-[11px] text-zinc-600">{r.itemId} · {r.ubicacion} · {r.usuarioNombre}</p>
