@@ -20,15 +20,34 @@ export async function dbGetTiendas(): Promise<Tienda[]> {
   }));
 }
 
-export async function dbUpsertTienda(t: Tienda): Promise<void> {
-  await supabase.from('tiendas').upsert(
-    { id: t.id, nombre: t.nombre, icono: t.icono, color: t.color, nit: t.nit ?? null },
-    { onConflict: 'id' },
-  );
+export async function dbUpsertTienda(
+  t: Tienda,
+  modoInventario?: 'ONLINE' | 'OFFLINE',
+): Promise<void> {
+  if (modoInventario !== undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('tiendas') as any).upsert(
+      { id: t.id, nombre: t.nombre, icono: t.icono, color: t.color, nit: t.nit ?? null, modo_inventario: modoInventario },
+      { onConflict: 'id' },
+    );
+  } else {
+    await supabase.from('tiendas').upsert(
+      { id: t.id, nombre: t.nombre, icono: t.icono, color: t.color, nit: t.nit ?? null },
+      { onConflict: 'id' },
+    );
+  }
 }
 
 export async function dbDeleteTienda(id: string): Promise<void> {
   await supabase.from('tiendas').delete().eq('id', id);
+}
+
+export async function dbSetModoInventario(
+  id: string,
+  modo: 'ONLINE' | 'OFFLINE',
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('tiendas') as any).update({ modo_inventario: modo }).eq('id', id);
 }
 
 // ─── USUARIOS ─────────────────────────────────────────────────────────────────
@@ -171,6 +190,14 @@ export async function dbUpsertCatalogo(tiendaId: string, articulos: Articulo[]):
 }
 
 // ─── SOBRANTES ────────────────────────────────────────────────────────────────
+
+export async function dbConfirmarSobrante(id: string): Promise<void> {
+  await supabase.from('sobrantes').update({ estado: 'CONFIRMADO' }).eq('id', id);
+}
+
+export async function dbDeleteSobrante(id: string): Promise<void> {
+  await supabase.from('sobrantes').delete().eq('id', id);
+}
 
 export async function dbGetSobrantes(tiendaId?: string): Promise<SobranteSinStock[]> {
   let query = supabase

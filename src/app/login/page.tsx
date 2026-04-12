@@ -132,6 +132,7 @@ export default function LoginPage() {
                       onChange={e => setCedula(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Ej: 1004807039"
+                      suppressHydrationWarning
                       className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
                     />
                   </div>
@@ -150,6 +151,7 @@ export default function LoginPage() {
                       onChange={e => setPassword(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Tu contraseña web"
+                      suppressHydrationWarning
                       className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
                     />
                     <button

@@ -1,20 +1,26 @@
+export const dynamic = 'force-dynamic';
+
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { dbGetTiendas, dbGetSobrantes } from '@/lib/db';
-import { formatDate, formatCOP } from '@/lib/utils';
-import { Badge } from '@/components/ui/Badge';
+import { getSession } from '@/lib/auth';
 import { ArrowLeft, Package } from 'lucide-react';
+import SobrantesClient from './SobrantesClient';
 
 interface Props { params: Promise<{ id: string }> }
 
 export default async function SobrantesPage({ params }: Props) {
   const { id } = await params;
-  const [tiendas, sobrantes] = await Promise.all([
+  const [user, tiendas, sobrantes] = await Promise.all([
+    getSession(),
     dbGetTiendas(),
     dbGetSobrantes(id),
   ]);
+
   const tienda = tiendas.find(t => t.id === id);
   if (!tienda) notFound();
+
+  const canManage = user?.rol === 'SUPERADMIN' || user?.rol === 'ADMIN';
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -33,48 +39,11 @@ export default async function SobrantesPage({ params }: Props) {
         </div>
       </div>
 
-      {sobrantes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-zinc-600">
-          <Package size={48} className="mb-4 opacity-30" />
-          <p className="text-sm font-medium">No hay sobrantes sin stock</p>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-zinc-800/60 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-800/60 bg-zinc-900/80">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Artículo</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Cant.</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Precio</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Estado</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden lg:table-cell">Auditor</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden lg:table-cell">Fecha</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/40">
-                {sobrantes.map(s => (
-                  <tr key={s.id} className="hover:bg-zinc-900/40 transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="text-zinc-200 font-medium truncate max-w-[200px]">{s.descripcion}</p>
-                      <p className="text-[11px] text-zinc-600">{s.codigo} · {s.ubicacion}</p>
-                    </td>
-                    <td className="px-4 py-3 text-center text-zinc-100 font-bold font-mono">{s.cantidad}</td>
-                    <td className="px-4 py-3 text-center text-zinc-300 text-xs">{formatCOP(s.precio)}</td>
-                    <td className="px-4 py-3 text-center">
-                      {s.estado === 'CONFIRMADO'
-                        ? <Badge variant="success">Confirmado</Badge>
-                        : <Badge variant="warning">Pendiente</Badge>}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-500 text-xs hidden lg:table-cell">{s.usuarioNombre}</td>
-                    <td className="px-4 py-3 text-zinc-600 text-xs hidden lg:table-cell">{formatDate(s.registradoEn)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <SobrantesClient
+        initialSobrantes={sobrantes}
+        tiendaId={id}
+        canManage={canManage}
+      />
     </div>
   );
 }

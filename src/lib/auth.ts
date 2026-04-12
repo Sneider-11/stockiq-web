@@ -1,9 +1,14 @@
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { cookies } from 'next/headers';
 import type { SessionUser } from '../types';
 
 const COOKIE_NAME = 'stockiq_session';
-const MAX_AGE    = 60 * 60 * 24 * 7; // 7 días
+const MAX_AGE    = 60 * 60 * 24; // 1 día
+
+// ─── Nonce de proceso ─────────────────────────────────────────────────────────
+// Cambia cada vez que el servidor arranca (a menos que SESSION_SECRET esté definida).
+// Esto invalida todas las cookies existentes al reiniciar el servidor.
+const SERVER_NONCE = process.env.SESSION_SECRET ?? randomBytes(16).toString('hex');
 
 // ─── Hash de contraseña ────────────────────────────────────────────────────────
 export function hashPassword(password: string): string {
@@ -11,15 +16,17 @@ export function hashPassword(password: string): string {
 }
 
 // ─── Serializar / deserializar sesión ─────────────────────────────────────────
-// Serialización simple: base64(JSON) — suficiente para una herramienta interna.
-// En producción se recomienda JWT firmado o cifrado.
 function encodeSession(user: SessionUser): string {
-  return Buffer.from(JSON.stringify(user)).toString('base64');
+  return Buffer.from(JSON.stringify({ ...user, _n: SERVER_NONCE })).toString('base64');
 }
 
 function decodeSession(token: string): SessionUser | null {
   try {
-    return JSON.parse(Buffer.from(token, 'base64').toString('utf-8')) as SessionUser;
+    const decoded = JSON.parse(Buffer.from(token, 'base64').toString('utf-8')) as SessionUser & { _n?: string };
+    // Si el nonce no coincide, la sesión es de otro arranque del servidor → inválida
+    if (decoded._n !== SERVER_NONCE) return null;
+    const { _n, ...user } = decoded;
+    return user as SessionUser;
   } catch {
     return null;
   }

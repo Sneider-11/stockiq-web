@@ -1,21 +1,26 @@
+export const dynamic = 'force-dynamic';
+
 import { getSession } from '@/lib/auth';
-import { User, Shield, Phone, Store } from 'lucide-react';
+import { dbGetTiendas } from '@/lib/db';
+import { User, Shield, Store } from 'lucide-react';
+import PerfilClient from './PerfilClient';
 
 export default async function PerfilPage() {
-  const user = await getSession();
+  const [user, tiendas] = await Promise.all([getSession(), dbGetTiendas()]);
   if (!user) return null;
 
-  const initials = user.nombre
-    .split(' ')
-    .slice(0, 2)
-    .map((w: string) => w[0])
-    .join('');
-
+  const initials = user.nombre.split(' ').slice(0, 2).map((w: string) => w[0]).join('');
   const rolLabel: Record<string, string> = {
     SUPERADMIN: 'Super Administrador',
     ADMIN:      'Administrador',
     CONTADOR:   'Contador',
   };
+
+  const tiendasNombres = user.tiendas.length === 0
+    ? 'Todas las tiendas'
+    : user.tiendas
+        .map(id => tiendas.find(t => t.id === id)?.nombre ?? id)
+        .join(', ');
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -54,16 +59,13 @@ export default async function PerfilPage() {
           <Store size={16} className="text-zinc-500 shrink-0" />
           <div>
             <p className="text-xs text-zinc-500 uppercase tracking-wide">Tiendas asignadas</p>
-            <p className="text-sm font-semibold text-zinc-100 mt-0.5">
-              {user.tiendas.length > 0 ? user.tiendas.join(', ') : 'Todas'}
-            </p>
+            <p className="text-sm font-semibold text-zinc-100 mt-0.5">{tiendasNombres}</p>
           </div>
         </div>
       </div>
 
-      <p className="text-xs text-zinc-600 text-center mt-6">
-        Para cambiar tu contraseña o datos, contacta al administrador.
-      </p>
+      {/* Cambiar contraseña */}
+      <PerfilClient />
     </div>
   );
 }
