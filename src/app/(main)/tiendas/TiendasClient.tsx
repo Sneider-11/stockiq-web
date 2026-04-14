@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   Store, Plus, Pencil, Trash2, X, Save, Loader2,
-  ChevronRight, Power, AlertCircle, Package,
+  ChevronRight, Power, AlertCircle, Package, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
@@ -32,13 +32,15 @@ interface FormState {
 const EMPTY: FormState = { nombre: '', nit: '', color: '#6366F1' };
 
 export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
-  const [tiendas,  setTiendas]  = useState<Tienda[]>(initialTiendas);
-  const [modal,    setModal]    = useState(false);
-  const [form,     setForm]     = useState<FormState>(EMPTY);
-  const [saving,   setSaving]   = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [toggling, setToggling] = useState<string | null>(null);
-  const [error,    setError]    = useState('');
+  const [tiendas,        setTiendas]        = useState<Tienda[]>(initialTiendas);
+  const [modal,          setModal]          = useState(false);
+  const [form,           setForm]           = useState<FormState>(EMPTY);
+  const [saving,         setSaving]         = useState(false);
+  const [deleting,       setDeleting]       = useState<string | null>(null);
+  const [toggling,       setToggling]       = useState<string | null>(null);
+  const [error,          setError]          = useState('');
+  const [confirmDelete,  setConfirmDelete]  = useState<string | null>(null);
+  const [confirmToggle,  setConfirmToggle]  = useState<string | null>(null);
 
   const openCreate = () => { setForm(EMPTY); setError(''); setModal(true); };
   const openEdit   = (t: Tienda) => {
@@ -93,8 +95,14 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
     if (!isSuperAdmin) return;
     const nuevoModo = t.modoInventario === 'OFFLINE' ? 'ONLINE' : 'OFFLINE';
     if (nuevoModo === 'OFFLINE') {
-      if (!confirm(`¿Cerrar el inventario de "${t.nombre}"? Los auditores no podrán escanear.`)) return;
+      setConfirmToggle(t.id);
+      return;
     }
+    await doToggle(t, nuevoModo);
+  };
+
+  const doToggle = async (t: Tienda, nuevoModo: 'ONLINE' | 'OFFLINE') => {
+    setConfirmToggle(null);
     setToggling(t.id);
     const res = await fetch(`/api/tiendas/${t.id}/modo`, {
       method: 'PATCH',
@@ -108,9 +116,13 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
   };
 
   // ── Eliminar ──────────────────────────────────────────────────────────────────
-  const handleDelete = async (t: Tienda) => {
+  const handleDelete = (t: Tienda) => {
     if (!isSuperAdmin) return;
-    if (!confirm(`¿Eliminar "${t.nombre}"? Se perderán todos sus registros y catálogo.`)) return;
+    setConfirmDelete(t.id);
+  };
+
+  const doDelete = async (t: Tienda) => {
+    setConfirmDelete(null);
     setDeleting(t.id);
     const res = await fetch(`/api/tiendas/${t.id}`, { method: 'DELETE' });
     if (res.ok) setTiendas(prev => prev.filter(x => x.id !== t.id));
@@ -190,6 +202,7 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
                         <button
                           onClick={() => handleToggleModo(t)}
                           disabled={toggling === t.id}
+                          aria-label={t.modoInventario === 'OFFLINE' ? 'Abrir inventario' : 'Cerrar inventario'}
                           title={t.modoInventario === 'OFFLINE' ? 'Abrir inventario' : 'Cerrar inventario'}
                           className={cn(
                             'p-1.5 rounded-lg transition-all',
@@ -199,25 +212,29 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
                           )}
                         >
                           {toggling === t.id
-                            ? <Loader2 size={14} className="animate-spin" />
-                            : <Power size={14} />}
+                            ? <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                            : <Power size={14} aria-hidden="true" />}
                         </button>
                         {/* Editar */}
                         <button
                           onClick={() => openEdit(t)}
+                          aria-label="Editar tienda"
+                          title="Editar tienda"
                           className="p-1.5 rounded-lg text-zinc-500 hover:text-vlt hover:bg-prp/10 transition-all"
                         >
-                          <Pencil size={14} />
+                          <Pencil size={14} aria-hidden="true" />
                         </button>
                         {/* Eliminar */}
                         <button
                           onClick={() => handleDelete(t)}
                           disabled={deleting === t.id}
+                          aria-label="Eliminar tienda"
+                          title="Eliminar tienda"
                           className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all disabled:opacity-50"
                         >
                           {deleting === t.id
-                            ? <Loader2 size={14} className="animate-spin" />
-                            : <Trash2 size={14} />}
+                            ? <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                            : <Trash2 size={14} aria-hidden="true" />}
                         </button>
                       </>
                     )}
@@ -225,12 +242,58 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
                     {/* Ver tienda */}
                     <Link
                       href={`/tienda/${t.id}`}
+                      aria-label={`Ver detalles de ${t.nombre}`}
+                      title={`Ver ${t.nombre}`}
                       className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
                     >
-                      <ChevronRight size={14} />
+                      <ChevronRight size={14} aria-hidden="true" />
                     </Link>
                   </div>
                 </div>
+
+                {/* Inline confirm: cerrar inventario */}
+                {confirmToggle === t.id && (
+                  <div className="mt-3 flex items-center gap-2 bg-amber-950/40 border border-amber-900/50 rounded-xl px-3 py-2.5 anim-fade-up">
+                    <AlertCircle size={13} className="text-amber-400 shrink-0" aria-hidden="true" />
+                    <p className="text-xs text-amber-300 flex-1">¿Cerrar inventario? Los auditores no podrán escanear.</p>
+                    <button
+                      onClick={() => doToggle(t, 'OFFLINE')}
+                      aria-label="Confirmar cierre de inventario"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-semibold hover:bg-amber-500/30 transition-all"
+                    >
+                      <Check size={11} aria-hidden="true" /> Confirmar
+                    </button>
+                    <button
+                      onClick={() => setConfirmToggle(null)}
+                      aria-label="Cancelar"
+                      className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 transition-all"
+                    >
+                      <X size={13} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Inline confirm: eliminar tienda */}
+                {confirmDelete === t.id && (
+                  <div className="mt-3 flex items-center gap-2 bg-red-950/40 border border-red-900/50 rounded-xl px-3 py-2.5 anim-fade-up">
+                    <AlertCircle size={13} className="text-red-400 shrink-0" aria-hidden="true" />
+                    <p className="text-xs text-red-300 flex-1">¿Eliminar tienda y todos sus datos?</p>
+                    <button
+                      onClick={() => doDelete(t)}
+                      aria-label="Confirmar eliminación"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-semibold hover:bg-red-500/30 transition-all"
+                    >
+                      <Check size={11} aria-hidden="true" /> Eliminar
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(null)}
+                      aria-label="Cancelar"
+                      className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 transition-all"
+                    >
+                      <X size={13} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -252,8 +315,8 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
                   {form.id ? 'Editar tienda' : 'Nueva tienda'}
                 </h2>
               </div>
-              <button onClick={closeModal} className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all">
-                <X size={18} />
+              <button onClick={closeModal} aria-label="Cerrar" className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all">
+                <X size={18} aria-hidden="true" />
               </button>
             </div>
 
@@ -297,6 +360,8 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
                       key={c}
                       type="button"
                       onClick={() => setForm(f => ({ ...f, color: c }))}
+                      aria-label={`Seleccionar color ${c}`}
+                      aria-pressed={form.color === c}
                       className={cn(
                         'w-7 h-7 rounded-lg transition-all hover:scale-110',
                         form.color === c && 'ring-2 ring-offset-2 ring-offset-zinc-900 ring-white scale-110',

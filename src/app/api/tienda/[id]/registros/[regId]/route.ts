@@ -11,7 +11,13 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   }
 
   try {
-    const { regId } = await params;
+    const { id, regId } = await params;
+
+    // Multi-tenancy: ADMIN can only delete records from their assigned stores
+    if (session.rol !== 'SUPERADMIN' && !session.tiendas.includes(id)) {
+      return NextResponse.json({ error: 'No tienes acceso a esta tienda.' }, { status: 403 });
+    }
+
     await dbDeleteRegistro(regId);
     return NextResponse.json({ ok: true });
   } catch (err) {

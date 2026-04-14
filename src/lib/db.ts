@@ -41,6 +41,9 @@ export async function dbUpdateGrupo(
 }
 
 export async function dbDeleteGrupo(id: string): Promise<void> {
+  // Unlink tiendas before deleting so they are not left orphaned
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('tiendas') as any).update({ grupo_id: null }).eq('grupo_id', id);
   await supabase.from('grupos_comerciales').delete().eq('id', id);
 }
 
@@ -97,6 +100,12 @@ export async function dbUpsertTienda(
 }
 
 export async function dbDeleteTienda(id: string): Promise<void> {
+  // Cascade delete: remove child records before the tienda itself
+  await Promise.all([
+    supabase.from('registros').delete().eq('tienda_id', id),
+    supabase.from('sobrantes').delete().eq('tienda_id', id),
+    supabase.from('catalogos').delete().eq('tienda_id', id),
+  ]);
   await supabase.from('tiendas').delete().eq('id', id);
 }
 
@@ -115,10 +124,10 @@ function migrateRol(rol: string): Usuario['rol'] {
   return rol as Usuario['rol'];
 }
 
-export async function dbGetUsuarios(): Promise<Usuario[]> {
+export async function dbGetUsuarios(): Promise<Omit<Usuario, 'passWeb'>[]> {
   const { data, error } = await supabase
     .from('usuarios')
-    .select('id,cedula,nombre,rol,tiendas,tiendas_roles,grupos,telefono,activo,creado_por,pass_web');
+    .select('id,cedula,nombre,rol,tiendas,tiendas_roles,grupos,telefono,activo,creado_por');
   if (error || !data) return [];
   return data.map(r => ({
     id:           r.id,
@@ -131,7 +140,6 @@ export async function dbGetUsuarios(): Promise<Usuario[]> {
     telefono:     r.telefono      ?? undefined,
     activo:       r.activo        ?? true,
     creadoPor:    r.creado_por    ?? undefined,
-    passWeb:      r.pass_web      ?? null,
   }));
 }
 
@@ -331,8 +339,16 @@ export async function dbGetTiendasConStats(): Promise<TiendaStats[]> {
     }
   }
 
+  // Build a Map for O(1) lookup instead of O(n) filter per tienda
+  const registrosByTienda = new Map<string, typeof registros>();
+  for (const r of registros) {
+    const list = registrosByTienda.get(r.tiendaId) ?? [];
+    list.push(r);
+    registrosByTienda.set(r.tiendaId, list);
+  }
+
   return tiendas.map(tienda => {
-    const regs = registros.filter(r => r.tiendaId === tienda.id);
+    const regs = registrosByTienda.get(tienda.id) ?? [];
     const total = catalogoCount[tienda.id] ?? 0;
 
     const faltantes    = regs.filter(r => r.clasificacion === 'FALTANTE');

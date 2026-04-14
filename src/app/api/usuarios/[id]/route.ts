@@ -19,6 +19,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Datos incompletos.' }, { status: 400 });
     }
 
+    const VALID_ROLES = ['SUPERADMIN', 'ADMIN', 'CONTADOR'];
+    if (!VALID_ROLES.includes(rol)) {
+      return NextResponse.json({ error: 'Rol inválido.' }, { status: 400 });
+    }
+
     await dbUpsertUsuario({
       id,
       nombre:       nombre.trim().toUpperCase(),

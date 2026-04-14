@@ -42,23 +42,29 @@ export function MobileMenu({ user, onClose }: Props) {
       />
 
       {/* Drawer */}
-      <aside className="fixed inset-y-0 left-0 z-50 w-72 bg-zinc-950 border-r border-zinc-800/60 flex flex-col lg:hidden mobile-drawer-enter shadow-2xl shadow-black/60">
+      <aside
+        className="fixed inset-y-0 left-0 z-50 w-[90vw] max-w-xs bg-zinc-950 border-r border-zinc-800/60 flex flex-col lg:hidden mobile-drawer-enter shadow-2xl shadow-black/60"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mobile-menu-title"
+      >
         {/* Logo + close */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-zinc-800/60 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-prp to-ind flex items-center justify-center shadow-lg shadow-prp/30 float">
-              <Layers size={16} className="text-white" />
+              <Layers size={16} className="text-white" aria-hidden="true" />
             </div>
             <div>
-              <span className="text-sm font-black text-white tracking-tight gradient-text">StockIQ</span>
+              <span id="mobile-menu-title" className="text-sm font-black text-white tracking-tight gradient-text">StockIQ</span>
               <span className="block text-[10px] text-zinc-500 -mt-0.5">Plataforma Web</span>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label="Cerrar menú"
             className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
           >
-            <X size={18} />
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 

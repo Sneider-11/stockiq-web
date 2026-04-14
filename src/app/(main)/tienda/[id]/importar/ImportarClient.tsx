@@ -17,8 +17,10 @@ interface Props {
 function sanitize(v: string, max: number) { return v.slice(0, max); }
 
 function parseExcel(arrayBuffer: ArrayBuffer): Articulo[] {
-  const workbook = read(arrayBuffer, { type: 'array', cellText: true });
-  const sheet    = workbook.Sheets[workbook.SheetNames[0]];
+  const workbook  = read(arrayBuffer, { type: 'array', cellText: true });
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) throw new Error('El archivo Excel no contiene hojas de cálculo.');
+  const sheet = workbook.Sheets[sheetName];
   const rows     = utils.sheet_to_json(sheet, { header: 1, raw: false }) as unknown[][];
   return rows
     .filter(r => (r as string[])[0] && String((r as string[])[0]).trim())
@@ -49,6 +51,10 @@ export function ImportarClient({ tiendaId, tiendaColor, catalogoActual }: Props)
     setError('');
     setPreview([]);
     setFileName(file.name);
+    if (file.size > 10 * 1024 * 1024) {
+      setError('El archivo es demasiado grande. Máximo permitido: 10 MB.');
+      return;
+    }
     try {
       const buffer = await file.arrayBuffer();
       const parsed = parseExcel(buffer);

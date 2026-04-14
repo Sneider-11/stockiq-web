@@ -221,7 +221,7 @@ export default function GrupoDetailClient({ grupo, tiendas: allTiendas, usuarios
                           >
                             <CheckCircle2 size={9} className="text-emerald-500" />
                             {t.nombre.replace('Tienda ', '').replace('Inventario ', '')}
-                            {u.tiendasRoles[t.id] && (
+                            {u.tiendasRoles?.[t.id] && (
                               <span className="text-zinc-600">· {u.tiendasRoles[t.id]}</span>
                             )}
                           </span>

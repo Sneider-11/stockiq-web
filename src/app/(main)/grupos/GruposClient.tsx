@@ -295,6 +295,8 @@ export default function GruposClient({ initialGrupos, tiendas }: Props) {
                       key={c}
                       type="button"
                       onClick={() => setForm(f => ({ ...f, color: c }))}
+                      aria-label={`Seleccionar color ${c}`}
+                      aria-pressed={form.color === c}
                       className={cn(
                         'w-7 h-7 rounded-lg transition-all hover:scale-110',
                         form.color === c && 'ring-2 ring-offset-2 ring-offset-zinc-900 ring-white scale-110',

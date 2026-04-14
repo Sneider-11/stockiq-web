@@ -12,7 +12,13 @@ export async function PATCH(_req: NextRequest, { params }: Params) {
   }
 
   try {
-    const { sobId } = await params;
+    const { id, sobId } = await params;
+
+    // Multi-tenancy: ADMIN can only modify sobrantes from their assigned stores
+    if (session.rol !== 'SUPERADMIN' && !session.tiendas.includes(id)) {
+      return NextResponse.json({ error: 'No tienes acceso a esta tienda.' }, { status: 403 });
+    }
+
     await dbConfirmarSobrante(sobId);
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -29,7 +35,13 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   }
 
   try {
-    const { sobId } = await params;
+    const { id, sobId } = await params;
+
+    // Multi-tenancy: ADMIN can only delete sobrantes from their assigned stores
+    if (session.rol !== 'SUPERADMIN' && !session.tiendas.includes(id)) {
+      return NextResponse.json({ error: 'No tienes acceso a esta tienda.' }, { status: 403 });
+    }
+
     await dbDeleteSobrante(sobId);
     return NextResponse.json({ ok: true });
   } catch (err) {

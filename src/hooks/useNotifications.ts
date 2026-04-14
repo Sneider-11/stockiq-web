@@ -12,11 +12,14 @@ export function useNotifications(cedula: string) {
 
   // Carga inicial
   const fetchNotifications = useCallback(async () => {
-    const res = await fetch('/api/notifications');
-    if (!res.ok) return;
-    const data: Notification[] = await res.json();
-    setNotifications(data);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/notifications');
+      if (!res.ok) return;
+      const data: Notification[] = await res.json();
+      setNotifications(data);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

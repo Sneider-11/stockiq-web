@@ -5,7 +5,17 @@ import { dbGetUsuarios, dbUpsertUsuario } from '@/lib/db';
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'No autorizado.' }, { status: 401 });
+
   const usuarios = await dbGetUsuarios();
+
+  // Multi-tenancy: non-SuperAdmins only see users that share at least one grupo
+  if (session.rol !== 'SUPERADMIN') {
+    const filtered = usuarios.filter(u =>
+      u.grupos.some((g: string) => session.grupos.includes(g)),
+    );
+    return NextResponse.json(filtered);
+  }
+
   return NextResponse.json(usuarios);
 }
 
@@ -25,6 +35,11 @@ export async function POST(req: NextRequest) {
 
     if (!nombre?.trim() || !cedula?.trim() || !rol) {
       return NextResponse.json({ error: 'Nombre, cédula y rol son requeridos.' }, { status: 400 });
+    }
+
+    const VALID_ROLES = ['SUPERADMIN', 'ADMIN', 'CONTADOR'];
+    if (!VALID_ROLES.includes(rol)) {
+      return NextResponse.json({ error: 'Rol inválido.' }, { status: 400 });
     }
 
     const id = crypto.randomUUID();
