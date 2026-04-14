@@ -52,7 +52,7 @@ body {
 ::selection { background: rgba(124,58,237,0.30); }
 
 /* ═══════════════════════════════════════════════════════
-   ANIMATIONS
+   KEYFRAMES
 ═══════════════════════════════════════════════════════ */
 
 @keyframes fadeInUp {
@@ -71,7 +71,7 @@ body {
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.96); }
+  from { opacity: 0; transform: scale(0.94); }
   to   { opacity: 1; transform: scale(1); }
 }
 
@@ -81,7 +81,12 @@ body {
 }
 
 @keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-18px); }
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideDrawer {
+  from { opacity: 0; transform: translateX(-100%); }
   to   { opacity: 1; transform: translateX(0); }
 }
 
@@ -90,17 +95,56 @@ body {
   100% { background-position: 400px 0; }
 }
 
-@keyframes pulse-ring {
-  0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124,58,237,0.5); }
-  70%  { transform: scale(1);    box-shadow: 0 0 0 8px rgba(124,58,237,0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124,58,237,0); }
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
 }
 
-/* Utility classes */
-.anim-fade-up   { animation: fadeInUp 0.4s cubic-bezier(.16,1,.3,1) both; }
-.anim-fade-in   { animation: fadeIn   0.3s ease-out both; }
-.anim-scale-in  { animation: scaleIn  0.35s cubic-bezier(.16,1,.3,1) both; }
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(124,58,237,0); }
+}
+
+@keyframes glowPulseGreen {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
+}
+
+@keyframes countUp {
+  from { transform: translateY(6px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(124,58,237,0.3); }
+  50%       { border-color: rgba(124,58,237,0.7); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ANIMATION UTILITY CLASSES
+═══════════════════════════════════════════════════════ */
+
+/* Entrance animations */
+.anim-fade-up    { animation: fadeInUp  0.4s cubic-bezier(.16,1,.3,1) both; }
+.anim-fade-in    { animation: fadeIn    0.3s ease-out both; }
+.anim-scale-in   { animation: scaleIn   0.35s cubic-bezier(.16,1,.3,1) both; }
 .anim-slide-right { animation: slideInRight 0.35s cubic-bezier(.16,1,.3,1) both; }
+.anim-slide-left  { animation: slideInLeft  0.35s cubic-bezier(.16,1,.3,1) both; }
 
 /* Stagger delays */
 .delay-50  { animation-delay: 50ms; }
@@ -112,7 +156,17 @@ body {
 .delay-400 { animation-delay: 400ms; }
 .delay-500 { animation-delay: 500ms; }
 
-/* Smooth accordion */
+/* Mobile drawer */
+.mobile-drawer-enter {
+  animation: slideDrawer 0.3s cubic-bezier(.16,1,.3,1) both;
+}
+
+/* Page transition wrapper */
+.page-enter {
+  animation: fadeInUp 0.45s cubic-bezier(.16,1,.3,1) both;
+}
+
+/* ── Accordion ──────────────────────────────────────────────────────────── */
 .accordion-content {
   display: grid;
   grid-template-rows: 0fr;
@@ -125,7 +179,7 @@ body {
   overflow: hidden;
 }
 
-/* Modal backdrop */
+/* ── Modal ─────────────────────────────────────────────────────────────── */
 .modal-backdrop {
   animation: fadeIn 0.2s ease-out both;
 }
@@ -133,14 +187,73 @@ body {
   animation: scaleIn 0.3s cubic-bezier(.16,1,.3,1) both;
 }
 
-/* Shimmer skeleton */
+/* ── Shimmer skeleton ───────────────────────────────────────────────────── */
 .shimmer {
   background: linear-gradient(90deg, #18181B 25%, #27272A 50%, #18181B 75%);
   background-size: 400px 100%;
   animation: shimmer 1.4s infinite linear;
 }
 
-/* Page transition wrapper */
-.page-enter {
-  animation: fadeInUp 0.45s cubic-bezier(.16,1,.3,1) both;
+/* ── Live dot (active indicator) ────────────────────────────────────────── */
+.live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: #10B981;
+  animation: pulseDot 2s ease-in-out infinite;
+}
+.live-dot-amber {
+  background: #F59E0B;
+}
+.live-dot-red {
+  background: #EF4444;
+}
+
+/* ── Glow effects ───────────────────────────────────────────────────────── */
+.glow-prp  { animation: glowPulse      2.5s ease-in-out infinite; }
+.glow-green { animation: glowPulseGreen 2.5s ease-in-out infinite; }
+
+/* ── Animated gradient text ─────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #A78BFA, #6366F1, #A78BFA);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease infinite;
+}
+
+/* ── Float (decorative icons) ───────────────────────────────────────────── */
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ── Count-up number reveal ─────────────────────────────────────────────── */
+.count-reveal {
+  animation: countUp 0.5s cubic-bezier(.16,1,.3,1) both;
+}
+
+/* ── Card hover glow ────────────────────────────────────────────────────── */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* ── Progress bar animated fill ─────────────────────────────────────────── */
+.progress-bar-animated {
+  animation: progressFill 1s cubic-bezier(.16,1,.3,1) both;
+}
+
+/* ── Stat number update flash ───────────────────────────────────────────── */
+@keyframes flashHighlight {
+  0%   { background: rgba(124,58,237,0.15); }
+  100% { background: transparent; }
+}
+.flash {
+  animation: flashHighlight 0.6s ease-out;
+  border-radius: 6px;
 }

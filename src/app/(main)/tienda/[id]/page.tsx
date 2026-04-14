@@ -3,8 +3,8 @@ export const dynamic = 'force-dynamic';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { dbGetTiendas, dbGetRegistros, dbGetCatalogo, dbGetSobrantes } from '@/lib/db';
-import { formatCOP } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { DescargarTiendaBtn } from '@/components/ui/DescargarTiendaBtn';
 import {
   ArrowLeft, Boxes, TrendingDown, TrendingUp,
@@ -47,7 +47,12 @@ export default async function TiendaPage({ params }: Props) {
   const valorFaltante  = faltantes.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
   const valorSobrante  = sobrReg.reduce((a, r)   => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
 
-  const barColor = progreso >= 80 ? '#10B981' : progreso >= 40 ? '#F59E0B' : '#EF4444';
+  const barColor =
+    progreso >= 80 ? '#10B981' :
+    progreso >= 40 ? '#F59E0B' : '#EF4444';
+  const barGlow =
+    progreso >= 80 ? 'rgba(16,185,129,0.5)' :
+    progreso >= 40 ? 'rgba(245,158,11,0.5)' : 'rgba(239,68,68,0.5)';
 
   const quickLinks = [
     { href: `/tienda/${id}/resultados`, label: 'Resultados',     icon: <BarChart2 size={18} />,      desc: 'Comparativa sistema vs contado' },
@@ -60,7 +65,10 @@ export default async function TiendaPage({ params }: Props) {
     <div className="max-w-6xl mx-auto page-enter">
       {/* ── Back + header ── */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <Link href="/" className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-all">
+        <Link
+          href="/"
+          className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-all hover:scale-105"
+        >
           <ArrowLeft size={18} />
         </Link>
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -87,24 +95,34 @@ export default async function TiendaPage({ params }: Props) {
         <div className="flex items-center gap-2 ml-auto">
           {tienda.modoInventario === 'OFFLINE'
             ? <Badge variant="danger">Inventario cerrado</Badge>
-            : <Badge variant="success">Activo</Badge>}
+            : (
+              <div className="flex items-center gap-1.5">
+                <span className="live-dot" />
+                <Badge variant="success">Activo</Badge>
+              </div>
+            )}
           <DescargarTiendaBtn registros={registros} tiendaNombre={tienda.nombre} />
         </div>
       </div>
 
       {/* ── Progress bar ── */}
-      <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/60 p-5 mb-5">
+      <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/60 p-5 mb-5 anim-fade-up" style={{ animationDelay: '50ms' }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <ScanLine size={16} className="text-zinc-500" />
             <span className="text-sm font-semibold text-zinc-300">Progreso de conteo</span>
           </div>
-          <span className="text-2xl font-black text-zinc-100">{progreso}%</span>
+          <AnimatedNumber value={progreso} format="percent" className="text-2xl font-black text-zinc-100" />
         </div>
         <div className="h-2.5 bg-zinc-800 rounded-full overflow-hidden mb-2">
           <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${Math.min(progreso, 100)}%`, backgroundColor: barColor }}
+            className="h-full rounded-full progress-bar-animated"
+            style={{
+              width: `${Math.min(progreso, 100)}%`,
+              backgroundColor: barColor,
+              boxShadow: `0 0 10px ${barGlow}`,
+              animationDelay: '300ms',
+            }}
           />
         </div>
         <div className="flex justify-between text-xs text-zinc-600">
@@ -116,16 +134,54 @@ export default async function TiendaPage({ params }: Props) {
       {/* ── Stats grid ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Sin diferencia', value: sinDif.length,    icon: <CheckCircle2 size={16} />, color: 'text-vlt',        bg: 'bg-purple-950/30 border-purple-900/40' },
-          { label: 'Faltantes',      value: faltantes.length, icon: <TrendingDown  size={16} />, color: 'text-red-400',     bg: 'bg-red-950/30 border-red-900/40',       sub: formatCOP(valorFaltante) },
-          { label: 'Sobrantes',      value: sobrReg.length,   icon: <TrendingUp    size={16} />, color: 'text-emerald-400', bg: 'bg-emerald-950/30 border-emerald-900/40', sub: formatCOP(valorSobrante) },
-          { label: 'Ceros',          value: ceros.length,     icon: <AlertTriangle size={16} />, color: 'text-amber-400',   bg: 'bg-amber-950/30 border-amber-900/40' },
+          {
+            label: 'Sin diferencia',
+            value: sinDif.length,
+            icon: <CheckCircle2 size={16} />,
+            color: 'text-vlt',
+            bg: 'bg-purple-950/30 border-purple-900/40 hover:border-purple-800/60',
+          },
+          {
+            label: 'Faltantes',
+            value: faltantes.length,
+            icon: <TrendingDown size={16} />,
+            color: 'text-red-400',
+            bg: 'bg-red-950/30 border-red-900/40 hover:border-red-800/60',
+            sub: valorFaltante,
+            subFormat: 'cop' as const,
+          },
+          {
+            label: 'Sobrantes',
+            value: sobrReg.length,
+            icon: <TrendingUp size={16} />,
+            color: 'text-emerald-400',
+            bg: 'bg-emerald-950/30 border-emerald-900/40 hover:border-emerald-800/60',
+            sub: valorSobrante,
+            subFormat: 'cop' as const,
+          },
+          {
+            label: 'Ceros',
+            value: ceros.length,
+            icon: <AlertTriangle size={16} />,
+            color: 'text-amber-400',
+            bg: 'bg-amber-950/30 border-amber-900/40 hover:border-amber-800/60',
+          },
         ].map((s, i) => (
-          <div key={i} className={`rounded-xl border p-4 ${s.bg}`}>
+          <div
+            key={i}
+            className={`rounded-xl border p-4 transition-all duration-200 anim-fade-up ${s.bg}`}
+            style={{ animationDelay: `${i * 60 + 100}ms` }}
+          >
             <div className={`${s.color} mb-2`}>{s.icon}</div>
-            <p className="text-2xl font-black text-zinc-100">{s.value}</p>
+            <AnimatedNumber value={s.value} className="text-2xl font-black text-zinc-100 block" />
             <p className="text-xs text-zinc-500 mt-0.5">{s.label}</p>
-            {s.sub && <p className={`text-[10px] ${s.color} mt-0.5 font-medium`}>{s.sub}</p>}
+            {s.sub !== undefined && s.subFormat && (
+              <AnimatedNumber
+                value={s.sub}
+                format={s.subFormat}
+                className={`text-[10px] ${s.color} mt-0.5 font-medium block`}
+              />
+            )}
           </div>
         ))}
       </div>
@@ -133,14 +189,15 @@ export default async function TiendaPage({ params }: Props) {
       {/* ── Quick links ── */}
       <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Acciones</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-        {quickLinks.map(link => (
+        {quickLinks.map((link, i) => (
           <Link
             key={link.href}
             href={link.href}
-            className="group flex items-center gap-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/60 hover:border-zinc-700 hover:bg-zinc-900 p-4 transition-all duration-200"
+            className="group flex items-center gap-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/60 hover:border-zinc-700 hover:bg-zinc-900 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 anim-slide-right"
+            style={{ animationDelay: `${i * 50 + 200}ms` }}
           >
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all group-hover:scale-105"
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all group-hover:scale-110"
               style={{ backgroundColor: tienda.color + '25', border: `1px solid ${tienda.color}45` }}
             >
               <span style={{ color: tienda.color }}>{link.icon}</span>
@@ -149,7 +206,7 @@ export default async function TiendaPage({ params }: Props) {
               <p className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors">{link.label}</p>
               <p className="text-xs text-zinc-500 truncate">{link.desc}</p>
             </div>
-            <ChevronRight size={16} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+            <ChevronRight size={16} className="text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-1 transition-all" />
           </Link>
         ))}
       </div>
@@ -164,8 +221,12 @@ export default async function TiendaPage({ params }: Props) {
             </Link>
           </div>
           <div className="space-y-2">
-            {registros.slice(0, 8).map(r => (
-              <div key={r.id} className="flex items-center gap-3 rounded-xl bg-zinc-900/40 border border-zinc-800/40 px-4 py-3 hover:bg-zinc-900/60 transition-colors">
+            {registros.slice(0, 8).map((r, i) => (
+              <div
+                key={r.id}
+                className="flex items-center gap-3 rounded-xl bg-zinc-900/40 border border-zinc-800/40 px-4 py-3 hover:bg-zinc-900/70 hover:border-zinc-700/60 transition-all duration-200 anim-fade-up"
+                style={{ animationDelay: `${i * 40 + 300}ms` }}
+              >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-zinc-200 font-medium truncate">{r.descripcion}</p>
                   <p className="text-[11px] text-zinc-600">{r.itemId} · {r.ubicacion} · {r.usuarioNombre}</p>

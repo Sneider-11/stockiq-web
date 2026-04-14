@@ -42,13 +42,16 @@ export default async function ResultadosPage({ params }: Props) {
   const noContados         = rows.filter(r => r.clsf === 'NO_CONTADO').length;
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto page-enter">
       <div className="flex items-center gap-3 mb-6">
-        <Link href={`/tienda/${id}`} className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-all">
+        <Link href={`/tienda/${id}`} className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 hover:scale-105 transition-all">
           <ArrowLeft size={18} />
         </Link>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0" style={{ backgroundColor: tienda.color }}>
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg"
+            style={{ backgroundColor: tienda.color, boxShadow: `0 4px 12px ${tienda.color}44` }}
+          >
             <Package size={16} />
           </div>
           <div>
