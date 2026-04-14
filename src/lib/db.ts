@@ -361,3 +361,56 @@ export async function dbGetTiendasConStats(): Promise<TiendaStats[]> {
     };
   });
 }
+
+// ─── NOTIFICACIONES ───────────────────────────────────────────────────────────
+
+export interface Notification {
+  id:         string;
+  userId:     string;
+  type:       'store_assigned' | 'store_removed' | 'inventory_opened' | 'inventory_closed' | 'inventory_complete' | 'group_assigned';
+  title:      string;
+  body:       string | null;
+  metadata:   Record<string, string>;
+  read:       boolean;
+  createdAt:  string;
+}
+
+export async function dbGetNotifications(cedula: string, limit = 25): Promise<Notification[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('notifications')
+    .select('*')
+    .eq('user_id', cedula)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error || !data) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return data.map((r: any) => ({
+    id:        r.id,
+    userId:    r.user_id,
+    type:      r.type,
+    title:     r.title,
+    body:      r.body ?? null,
+    metadata:  r.metadata ?? {},
+    read:      r.read,
+    createdAt: r.created_at,
+  }));
+}
+
+export async function dbMarkNotificationsRead(ids: string[]): Promise<void> {
+  if (!ids.length) return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any)
+    .from('notifications')
+    .update({ read: true })
+    .in('id', ids);
+}
+
+export async function dbMarkAllNotificationsRead(cedula: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any)
+    .from('notifications')
+    .update({ read: true })
+    .eq('user_id', cedula)
+    .eq('read', false);
+}

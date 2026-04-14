@@ -62,6 +62,7 @@ export default function PerfilClient() {
               value={currentPass}
               onChange={e => setCurrentPass(e.target.value)}
               placeholder="Tu contraseña actual"
+              suppressHydrationWarning
               className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
             />
             <button type="button" onClick={() => setShowCurrent(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
@@ -82,6 +83,7 @@ export default function PerfilClient() {
               value={newPass}
               onChange={e => setNewPass(e.target.value)}
               placeholder="Mínimo 6 caracteres"
+              suppressHydrationWarning
               className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
             />
             <button type="button" onClick={() => setShowNew(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
@@ -102,6 +104,7 @@ export default function PerfilClient() {
               value={confirmPass}
               onChange={e => setConfirmPass(e.target.value)}
               placeholder="Repite la contraseña"
+              suppressHydrationWarning
               className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
             />
             <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">

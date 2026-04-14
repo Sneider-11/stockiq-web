@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       rol:          usuario.rol,
       tiendas:      usuario.tiendas,
       tiendasRoles: usuario.tiendasRoles,
+      grupos:       usuario.grupos ?? [],
     };
 
     const cookie = buildSessionCookie(sessionUser);

@@ -1,9 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Bell, Menu } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { Menu } from 'lucide-react';
 import { MobileMenu } from './MobileMenu';
 import type { SessionUser } from '@/types';
+
+// ssr: false — evita que el componente se renderice en el servidor.
+// Esto elimina cualquier posible mismatch de hidratación causado por
+// estado reactivo (Supabase Realtime, Date.now en timeAgo, etc.)
+const NotificationBell = dynamic(
+  () => import('@/components/ui/NotificationBell').then(m => ({ default: m.NotificationBell })),
+  { ssr: false },
+);
 
 interface Props {
   user: SessionUser;
@@ -30,12 +39,7 @@ export function Header({ user, title }: Props) {
         </div>
 
         <div className="flex items-center gap-3 anim-slide-left" style={{ animationDelay: '60ms' }}>
-          <button
-            className="relative p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all btn-press"
-            aria-label="Notificaciones"
-          >
-            <Bell size={18} />
-          </button>
+          <NotificationBell cedula={user.cedula} />
           <div className="flex items-center gap-2.5 pl-3 border-l border-zinc-800">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-prp to-ind flex items-center justify-center text-white text-xs font-black ring-2 ring-prp/20 hover:ring-prp/40 hover:scale-105 transition-all duration-200 cursor-default">
               {user.nombre.charAt(0)}

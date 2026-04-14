@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { nombre, cedula, rol, tiendas, tiendasRoles, grupos, activo } = body as {
       nombre?: string; cedula?: string; rol?: string;
-      tiendas?: string[]; tiendasRoles?: Record<string, string>;
+      tiendas?: string[]; tiendasRoles?: Record<string, 'ADMIN' | 'CONTADOR'>;
       grupos?: string[]; activo?: boolean;
     };
 
