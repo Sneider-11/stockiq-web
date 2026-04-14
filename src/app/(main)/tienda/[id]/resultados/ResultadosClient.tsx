@@ -80,7 +80,7 @@ export default function ResultadosClient({ rows }: Props) {
         </div>
       </div>
 
-      <p className="text-xs text-zinc-600 mb-3">
+      <p className="text-xs text-zinc-500 mb-3">
         {filtered.length} de {rows.length} artículos
         {(search || filtro) && ' (filtrado)'}
       </p>
@@ -111,17 +111,17 @@ export default function ResultadosClient({ rows }: Props) {
                   <tr key={r.itemId} className="hover:bg-zinc-900/40 transition-colors">
                     <td className="px-4 py-3">
                       <p className="text-zinc-200 font-medium truncate max-w-[200px]">{r.descripcion}</p>
-                      <p className="text-[11px] text-zinc-600">{r.itemId}</p>
+                      <p className="text-[11px] text-zinc-500">{r.itemId}</p>
                     </td>
                     <td className="px-4 py-3 text-zinc-500 text-xs hidden md:table-cell">{r.ubicacion}</td>
                     <td className="px-4 py-3 text-center text-zinc-400 font-mono">{r.stockSist}</td>
                     <td className="px-4 py-3 text-center font-mono">
                       {r.contado !== null
                         ? <span className="text-zinc-100 font-bold">{r.contado}</span>
-                        : <span className="text-zinc-700">—</span>}
+                        : <span className="text-zinc-600">—</span>}
                     </td>
                     <td className="px-4 py-3 text-center font-mono font-bold">
-                      {r.diferencia === null ? <span className="text-zinc-700">—</span>
+                      {r.diferencia === null ? <span className="text-zinc-600">—</span>
                         : r.diferencia > 0 ? <span className="text-emerald-400">+{r.diferencia}</span>
                         : r.diferencia < 0 ? <span className="text-red-400">{r.diferencia}</span>
                         : <span className="text-zinc-500 flex justify-center"><Minus size={14} /></span>}

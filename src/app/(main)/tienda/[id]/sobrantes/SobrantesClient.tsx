@@ -81,7 +81,7 @@ export default function SobrantesClient({ initialSobrantes, tiendaId, canManage 
                   <tr key={s.id} className="hover:bg-zinc-900/40 transition-colors group">
                     <td className="px-4 py-3">
                       <p className="text-zinc-200 font-medium truncate max-w-[200px]">{s.descripcion}</p>
-                      <p className="text-[11px] text-zinc-600">{s.codigo} · {s.ubicacion}</p>
+                      <p className="text-[11px] text-zinc-500">{s.codigo} · {s.ubicacion}</p>
                     </td>
                     <td className="px-4 py-3 text-center text-zinc-100 font-bold font-mono">{s.cantidad}</td>
                     <td className="px-4 py-3 text-center text-zinc-300 text-xs">{formatCOP(s.precio)}</td>
@@ -91,7 +91,7 @@ export default function SobrantesClient({ initialSobrantes, tiendaId, canManage 
                         : <Badge variant="warning">Pendiente</Badge>}
                     </td>
                     <td className="px-4 py-3 text-zinc-500 text-xs hidden lg:table-cell">{s.usuarioNombre}</td>
-                    <td className="px-4 py-3 text-zinc-600 text-xs hidden lg:table-cell">{formatDate(s.registradoEn)}</td>
+                    <td className="px-4 py-3 text-zinc-500 text-xs hidden lg:table-cell">{formatDate(s.registradoEn)}</td>
                     {canManage && (
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1.5">
@@ -101,7 +101,7 @@ export default function SobrantesClient({ initialSobrantes, tiendaId, canManage 
                               onClick={() => handleConfirmar(s)}
                               disabled={confirming === s.id}
                               title="Confirmar sobrante"
-                              className="p-1.5 rounded-lg text-zinc-600 hover:text-emerald-400 hover:bg-emerald-950/30 transition-all disabled:opacity-50"
+                              className="p-1.5 rounded-lg text-zinc-500 hover:text-emerald-400 hover:bg-emerald-950/30 transition-all disabled:opacity-50"
                             >
                               {confirming === s.id
                                 ? <Loader2 size={14} className="animate-spin" />
@@ -113,7 +113,7 @@ export default function SobrantesClient({ initialSobrantes, tiendaId, canManage 
                             onClick={() => handleDelete(s)}
                             disabled={deleting === s.id}
                             title="Eliminar"
-                            className="p-1.5 rounded-lg text-zinc-600 hover:text-red-400 hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                            className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
                           >
                             {deleting === s.id
                               ? <Loader2 size={14} className="animate-spin" />

@@ -72,7 +72,7 @@ function TiendaCard({ stats, index }: { stats: TiendaStats; index: number }) {
               </h3>
               {tienda.nit
                 ? <p className="text-[11px] text-zinc-500 flex items-center gap-1 mt-0.5"><Hash size={10}/>{tienda.nit}</p>
-                : <p className="text-[11px] text-zinc-600 mt-0.5">{totalCatalogo} artículos</p>}
+                : <p className="text-[11px] text-zinc-500 mt-0.5">{totalCatalogo} artículos</p>}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -83,7 +83,7 @@ function TiendaCard({ stats, index }: { stats: TiendaStats; index: number }) {
             {isClosed
               ? <Badge variant="danger">Cerrado</Badge>
               : <Badge variant="success">Activo</Badge>}
-            <ChevronRight size={15} className="text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all" />
+            <ChevronRight size={15} className="text-zinc-500 group-hover:text-zinc-300 group-hover:translate-x-0.5 transition-all" />
           </div>
         </div>
 
@@ -95,8 +95,8 @@ function TiendaCard({ stats, index }: { stats: TiendaStats; index: number }) {
           </div>
           <ProgresoBar value={progreso} />
           <div className="flex justify-between mt-1">
-            <span className="text-[10px] text-zinc-600">{totalRegistros} escaneados</span>
-            <span className="text-[10px] text-zinc-600">{totalCatalogo} total</span>
+            <span className="text-[10px] text-zinc-500">{totalRegistros} escaneados</span>
+            <span className="text-[10px] text-zinc-500">{totalCatalogo} total</span>
           </div>
         </div>
 
@@ -193,7 +193,7 @@ function GlobalSummary({ stats }: { stats: TiendaStats[] }) {
           <div className={`${item.color} mb-3`}>{item.icon}</div>
           {item.node}
           <p className="text-xs text-zinc-500 mt-0.5">{item.label}</p>
-          <p className="text-[10px] text-zinc-600 mt-0.5">{item.sub}</p>
+          <p className="text-[10px] text-zinc-500 mt-0.5">{item.sub}</p>
         </div>
       ))}
     </div>

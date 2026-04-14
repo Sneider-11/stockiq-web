@@ -54,11 +54,42 @@ export default async function TiendaPage({ params }: Props) {
     progreso >= 80 ? 'rgba(16,185,129,0.5)' :
     progreso >= 40 ? 'rgba(245,158,11,0.5)' : 'rgba(239,68,68,0.5)';
 
+  // ── Quick links con color semántico propio ─────────────────────────────────
+  // Cada acción tiene su propio color visible independiente del color de la tienda.
+  // Se usa el color de la tienda SÓLO como acento secundario (borde/sombra).
   const quickLinks = [
-    { href: `/tienda/${id}/resultados`, label: 'Resultados',     icon: <BarChart2 size={18} />,      desc: 'Comparativa sistema vs contado' },
-    { href: `/tienda/${id}/registros`,  label: 'Registros',      icon: <ClipboardList size={18} />,  desc: `${registros.length} artículos escaneados` },
-    { href: `/tienda/${id}/importar`,   label: 'Importar Excel', icon: <Upload size={18} />,         desc: `Catálogo TNS · ${total} artículos` },
-    { href: `/tienda/${id}/sobrantes`,  label: 'Sobrantes',      icon: <AlertTriangle size={18} />,  desc: `${sobrantes.length} sin stock en sistema` },
+    {
+      href:    `/tienda/${id}/resultados`,
+      label:   'Resultados',
+      icon:    <BarChart2 size={18} />,
+      desc:    'Comparativa sistema vs contado',
+      iconBg:  '#4F46E5',          // indigo sólido
+      iconGlow:'rgba(79,70,229,0.35)',
+    },
+    {
+      href:    `/tienda/${id}/registros`,
+      label:   'Registros',
+      icon:    <ClipboardList size={18} />,
+      desc:    `${registros.length} artículos escaneados`,
+      iconBg:  '#0284C7',          // sky-600
+      iconGlow:'rgba(2,132,199,0.35)',
+    },
+    {
+      href:    `/tienda/${id}/importar`,
+      label:   'Importar Excel',
+      icon:    <Upload size={18} />,
+      desc:    `Catálogo TNS · ${total} artículos`,
+      iconBg:  '#059669',          // emerald-600
+      iconGlow:'rgba(5,150,105,0.35)',
+    },
+    {
+      href:    `/tienda/${id}/sobrantes`,
+      label:   'Sobrantes',
+      icon:    <AlertTriangle size={18} />,
+      desc:    `${sobrantes.length} sin stock en sistema`,
+      iconBg:  '#D97706',          // amber-600
+      iconGlow:'rgba(217,119,6,0.35)',
+    },
   ];
 
   return (
@@ -67,7 +98,7 @@ export default async function TiendaPage({ params }: Props) {
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <Link
           href="/"
-          className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-all hover:scale-105"
+          className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-600 hover:bg-zinc-800 transition-all hover:scale-105"
         >
           <ArrowLeft size={18} />
         </Link>
@@ -80,15 +111,15 @@ export default async function TiendaPage({ params }: Props) {
           </div>
           <div className="min-w-0">
             <h1 className="text-xl font-black text-zinc-100 tracking-tight truncate">{tienda.nombre}</h1>
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap mt-0.5">
               {tienda.nit && (
-                <span className="flex items-center gap-1 text-xs text-zinc-500">
+                <span className="flex items-center gap-1 text-xs text-zinc-400">
                   <Hash size={11} />
                   {tienda.nit}
                 </span>
               )}
-              <span className="text-xs text-zinc-600">·</span>
-              <span className="text-xs text-zinc-500">{total} artículos en catálogo</span>
+              {tienda.nit && <span className="text-xs text-zinc-600">·</span>}
+              <span className="text-xs text-zinc-400">{total} artículos en catálogo</span>
             </div>
           </div>
         </div>
@@ -109,8 +140,8 @@ export default async function TiendaPage({ params }: Props) {
       <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/60 p-5 mb-5 anim-fade-up" style={{ animationDelay: '50ms' }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <ScanLine size={16} className="text-zinc-500" />
-            <span className="text-sm font-semibold text-zinc-300">Progreso de conteo</span>
+            <ScanLine size={16} className="text-zinc-400" />
+            <span className="text-sm font-semibold text-zinc-200">Progreso de conteo</span>
           </div>
           <AnimatedNumber value={progreso} format="percent" className="text-2xl font-black text-zinc-100" />
         </div>
@@ -125,7 +156,7 @@ export default async function TiendaPage({ params }: Props) {
             }}
           />
         </div>
-        <div className="flex justify-between text-xs text-zinc-600">
+        <div className="flex justify-between text-xs text-zinc-500">
           <span>{registros.length} artículos escaneados</span>
           <span>{total > 0 ? `${total - registros.length} pendientes` : 'Sin catálogo cargado'}</span>
         </div>
@@ -138,15 +169,15 @@ export default async function TiendaPage({ params }: Props) {
             label: 'Sin diferencia',
             value: sinDif.length,
             icon: <CheckCircle2 size={16} />,
-            color: 'text-vlt',
-            bg: 'bg-purple-950/30 border-purple-900/40 hover:border-purple-800/60',
+            color: 'text-purple-400',
+            bg: 'bg-purple-950/40 border-purple-800/50 hover:border-purple-700/70',
           },
           {
             label: 'Faltantes',
             value: faltantes.length,
             icon: <TrendingDown size={16} />,
             color: 'text-red-400',
-            bg: 'bg-red-950/30 border-red-900/40 hover:border-red-800/60',
+            bg: 'bg-red-950/40 border-red-800/50 hover:border-red-700/70',
             sub: valorFaltante,
             subFormat: 'cop' as const,
           },
@@ -155,7 +186,7 @@ export default async function TiendaPage({ params }: Props) {
             value: sobrReg.length,
             icon: <TrendingUp size={16} />,
             color: 'text-emerald-400',
-            bg: 'bg-emerald-950/30 border-emerald-900/40 hover:border-emerald-800/60',
+            bg: 'bg-emerald-950/40 border-emerald-800/50 hover:border-emerald-700/70',
             sub: valorSobrante,
             subFormat: 'cop' as const,
           },
@@ -164,7 +195,7 @@ export default async function TiendaPage({ params }: Props) {
             value: ceros.length,
             icon: <AlertTriangle size={16} />,
             color: 'text-amber-400',
-            bg: 'bg-amber-950/30 border-amber-900/40 hover:border-amber-800/60',
+            bg: 'bg-amber-950/40 border-amber-800/50 hover:border-amber-700/70',
           },
         ].map((s, i) => (
           <div
@@ -174,7 +205,7 @@ export default async function TiendaPage({ params }: Props) {
           >
             <div className={`${s.color} mb-2`}>{s.icon}</div>
             <AnimatedNumber value={s.value} className="text-2xl font-black text-zinc-100 block" />
-            <p className="text-xs text-zinc-500 mt-0.5">{s.label}</p>
+            <p className="text-xs text-zinc-400 mt-0.5">{s.label}</p>
             {s.sub !== undefined && s.subFormat && (
               <AnimatedNumber
                 value={s.sub}
@@ -187,7 +218,7 @@ export default async function TiendaPage({ params }: Props) {
       </div>
 
       {/* ── Quick links ── */}
-      <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Acciones</h2>
+      <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">Acciones</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
         {quickLinks.map((link, i) => (
           <Link
@@ -196,17 +227,21 @@ export default async function TiendaPage({ params }: Props) {
             className="group flex items-center gap-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/60 hover:border-zinc-700 hover:bg-zinc-900 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 anim-slide-right"
             style={{ animationDelay: `${i * 50 + 200}ms` }}
           >
+            {/* Ícono con color semántico sólido — siempre visible */}
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all group-hover:scale-110"
-              style={{ backgroundColor: tienda.color + '25', border: `1px solid ${tienda.color}45` }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 transition-all group-hover:scale-110 group-hover:brightness-110"
+              style={{
+                backgroundColor: link.iconBg,
+                boxShadow: `0 2px 10px ${link.iconGlow}`,
+              }}
             >
-              <span style={{ color: tienda.color }}>{link.icon}</span>
+              {link.icon}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors">{link.label}</p>
-              <p className="text-xs text-zinc-500 truncate">{link.desc}</p>
+              <p className="text-xs text-zinc-400 truncate mt-0.5">{link.desc}</p>
             </div>
-            <ChevronRight size={16} className="text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-1 transition-all" />
+            <ChevronRight size={16} className="text-zinc-500 group-hover:text-zinc-300 group-hover:translate-x-1 transition-all shrink-0" />
           </Link>
         ))}
       </div>
@@ -215,8 +250,8 @@ export default async function TiendaPage({ params }: Props) {
       {registros.length > 0 && (
         <>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Últimos escaneos</h2>
-            <Link href={`/tienda/${id}/registros`} className="text-xs text-vlt hover:text-prp transition-colors">
+            <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Últimos escaneos</h2>
+            <Link href={`/tienda/${id}/registros`} className="text-xs text-purple-400 hover:text-purple-300 font-medium transition-colors">
               Ver todos →
             </Link>
           </div>
@@ -228,13 +263,13 @@ export default async function TiendaPage({ params }: Props) {
                 style={{ animationDelay: `${i * 40 + 300}ms` }}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-zinc-200 font-medium truncate">{r.descripcion}</p>
-                  <p className="text-[11px] text-zinc-600">{r.itemId} · {r.ubicacion} · {r.usuarioNombre}</p>
+                  <p className="text-sm text-zinc-100 font-medium truncate">{r.descripcion}</p>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">{r.itemId} · {r.ubicacion} · {r.usuarioNombre}</p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
                     <p className="text-sm font-bold text-zinc-100">{r.cantidad}</p>
-                    <p className="text-[10px] text-zinc-600">contado</p>
+                    <p className="text-[10px] text-zinc-500">contado</p>
                   </div>
                   <ClasificacionBadge clsf={r.clasificacion} />
                 </div>

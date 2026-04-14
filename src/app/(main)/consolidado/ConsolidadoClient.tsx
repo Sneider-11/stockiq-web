@@ -144,20 +144,20 @@ function AccordionSection({ section, defaultOpen = false }: { section: Section; 
                     >
                       <td className="px-4 py-2.5">
                         <p className="text-zinc-200 font-medium truncate max-w-[180px] text-xs">{r.descripcion}</p>
-                        <p className="text-[10px] text-zinc-600">{r.itemId}</p>
+                        <p className="text-[10px] text-zinc-500">{r.itemId}</p>
                       </td>
                       <td className="px-4 py-2.5 text-center text-zinc-500 font-mono text-xs hidden md:table-cell">{r.stockSistema}</td>
                       <td className="px-4 py-2.5 text-center text-zinc-100 font-black font-mono text-xs">{r.cantidad}</td>
                       <td className="px-4 py-2.5 text-center font-mono font-black text-xs">
                         {dif === 0
-                          ? <span className="text-zinc-700">—</span>
+                          ? <span className="text-zinc-600">—</span>
                           : dif > 0
                             ? <span className="text-emerald-400">+{dif}</span>
                             : <span className="text-red-400">{dif}</span>}
                       </td>
                       <td className="px-4 py-2.5 text-center"><ClsfBadge c={r.clasificacion} /></td>
                       <td className="px-4 py-2.5 text-zinc-500 text-xs hidden lg:table-cell">{r.usuarioNombre}</td>
-                      <td className="px-4 py-2.5 text-zinc-600 text-xs hidden lg:table-cell whitespace-nowrap">{fDate(r.escaneadoEn)}</td>
+                      <td className="px-4 py-2.5 text-zinc-500 text-xs hidden lg:table-cell whitespace-nowrap">{fDate(r.escaneadoEn)}</td>
                     </tr>
                   );
                 })}
@@ -396,7 +396,7 @@ export default function ConsolidadoClient({ tiendas, registros }: Props) {
                 {months.length > 0 && (
                   <button
                     onClick={() => setMonths([])}
-                    className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800/40 transition-all"
+                    className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40 transition-all"
                   >
                     Limpiar ×
                   </button>
@@ -435,7 +435,7 @@ export default function ConsolidadoClient({ tiendas, registros }: Props) {
                 {tiendaFilter.length > 0 && (
                   <button
                     onClick={() => setTiendaFilter([])}
-                    className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800/40 transition-all"
+                    className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40 transition-all"
                   >
                     Todas ×
                   </button>
@@ -481,7 +481,7 @@ export default function ConsolidadoClient({ tiendas, registros }: Props) {
             <FileSpreadsheet size={28} className="opacity-40" />
           </div>
           <p className="text-sm font-semibold">Sin registros para este período</p>
-          <p className="text-xs mt-1 text-zinc-700">Ajusta los filtros o sincroniza datos desde la app móvil.</p>
+          <p className="text-xs mt-1 text-zinc-500">Ajusta los filtros o sincroniza datos desde la app móvil.</p>
         </div>
       ) : (
         <div className="space-y-3">

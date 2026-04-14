@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import type { Usuario, Tienda, SessionUser, Rol } from '@/types';
 
 interface Props {
@@ -257,7 +258,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: 
                             style={{ backgroundColor: tienda?.color ?? '#52525B' }}
                           />
                           {tienda?.nombre.replace('Tienda ', '').replace('Inventario ', '') ?? tid}
-                          {storeRol && <span className="text-zinc-600">· {storeRol}</span>}
+                          {storeRol && <span className="text-zinc-500">· {storeRol}</span>}
                         </span>
                       );
                     })}
@@ -312,15 +313,8 @@ export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: 
           MODAL
       ════════════════════════════════════════ */}
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={closeModal}
-          />
-
-          {/* Card */}
-          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-700/80 bg-zinc-900 shadow-2xl modal-card">
+        <Modal onClose={closeModal}>
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-700/80 bg-zinc-900 shadow-2xl modal-card">
 
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-zinc-800/60 bg-zinc-900/95 backdrop-blur">
@@ -391,7 +385,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: 
                   </select>
                   <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
                 </div>
-                <p className="text-[11px] text-zinc-600 mt-1">
+                <p className="text-[11px] text-zinc-500 mt-1">
                   {form.rol === 'SUPERADMIN' && 'Acceso completo a todas las tiendas y configuración.'}
                   {form.rol === 'ADMIN' && 'Puede escanear, ver resultados y gestionar contadores.'}
                   {form.rol === 'CONTADOR' && 'Solo puede escanear artículos en las tiendas asignadas.'}
@@ -470,7 +464,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: 
                           )}
 
                           {isSuperRol && (
-                            <span className="text-[11px] text-zinc-600 shrink-0">Global</span>
+                            <span className="text-[11px] text-zinc-500 shrink-0">Global</span>
                           )}
                         </div>
                       </div>
@@ -525,7 +519,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: 
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

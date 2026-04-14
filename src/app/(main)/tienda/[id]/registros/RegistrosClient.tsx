@@ -118,7 +118,7 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
       </div>
 
       {/* ── Contador ── */}
-      <p className="text-xs text-zinc-600 mb-3">
+      <p className="text-xs text-zinc-500 mb-3">
         {filtered.length} de {registros.length} registros
         {(search || filtroClsf) && ' (filtrado)'}
       </p>
@@ -150,20 +150,20 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
                   <tr key={r.id} className="hover:bg-zinc-900/40 transition-colors group">
                     <td className="px-4 py-3">
                       <p className="text-zinc-200 font-medium truncate max-w-[200px]">{r.descripcion}</p>
-                      <p className="text-[11px] text-zinc-600">{r.itemId}</p>
+                      <p className="text-[11px] text-zinc-500">{r.itemId}</p>
                     </td>
                     <td className="px-4 py-3 text-zinc-400 hidden md:table-cell">{r.ubicacion}</td>
                     <td className="px-4 py-3 text-center text-zinc-300 font-mono">{r.stockSistema}</td>
                     <td className="px-4 py-3 text-center text-zinc-100 font-bold font-mono">{r.cantidad}</td>
                     <td className="px-4 py-3 text-center">{CLSF_BADGE[r.clasificacion]}</td>
                     <td className="px-4 py-3 text-zinc-500 text-xs hidden lg:table-cell">{r.usuarioNombre}</td>
-                    <td className="px-4 py-3 text-zinc-600 text-xs hidden lg:table-cell">{formatDate(r.escaneadoEn)}</td>
+                    <td className="px-4 py-3 text-zinc-500 text-xs hidden lg:table-cell">{formatDate(r.escaneadoEn)}</td>
                     {canDelete && (
                       <td className="px-4 py-3">
                         <button
                           onClick={() => handleDelete(r)}
                           disabled={deleting === r.id}
-                          className="p-1.5 rounded-lg text-zinc-600 hover:text-red-400 hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
                         >
                           {deleting === r.id
                             ? <Loader2 size={13} className="animate-spin" />

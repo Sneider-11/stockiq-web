@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import type { Tienda } from '@/types';
 
 const PRESET_COLORS = [
@@ -238,9 +239,8 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
 
       {/* ════════════════════════════ MODAL ════════════════════════════ */}
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative w-full max-w-md rounded-2xl border border-zinc-700/80 bg-zinc-900 shadow-2xl">
+        <Modal onClose={closeModal}>
+          <div className="w-full max-w-md rounded-2xl border border-zinc-700/80 bg-zinc-900 shadow-2xl modal-card">
 
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800/60">
@@ -353,7 +353,7 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
