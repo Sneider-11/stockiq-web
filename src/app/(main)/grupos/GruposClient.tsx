@@ -265,8 +265,8 @@ export default function GruposClient({ initialGrupos, tiendas }: Props) {
                   type="text"
                   value={form.nombre}
                   onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-                  placeholder="Ej: GRUPO MEYER"
-                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                  placeholder="Nombre del grupo comercial"
+                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                 />
               </div>
 
@@ -279,8 +279,8 @@ export default function GruposClient({ initialGrupos, tiendas }: Props) {
                   type="text"
                   value={form.descripcion}
                   onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
-                  placeholder="Ej: Concesionarios de motos región norte"
-                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                  placeholder="Descripción breve del grupo (opcional)"
+                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                 />
               </div>
 
@@ -319,7 +319,7 @@ export default function GruposClient({ initialGrupos, tiendas }: Props) {
                     <Building2 size={14} />
                   </div>
                   <span className="text-sm font-semibold text-zinc-200">
-                    {form.nombre.trim().toUpperCase() || 'NOMBRE DEL GRUPO'}
+                    {form.nombre.trim().toUpperCase() || 'VISTA PREVIA'}
                   </span>
                 </div>
               </div>
@@ -341,7 +341,7 @@ export default function GruposClient({ initialGrupos, tiendas }: Props) {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-prp to-ind text-white text-sm font-semibold shadow-lg shadow-prp/20 hover:brightness-110 active:scale-[0.97] transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-prp to-ind text-white text-sm font-semibold shadow-lg shadow-prp/20 hover:brightness-110 active:scale-[0.97] transition-all disabled:opacity-50 btn-press"
               >
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 {saving ? 'Guardando…' : 'Guardar'}

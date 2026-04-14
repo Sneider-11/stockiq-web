@@ -210,7 +210,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
           placeholder="Buscar por nombre o cédula..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+          className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
         />
       </div>
 
@@ -368,8 +368,8 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
                   type="text"
                   value={form.nombre}
                   onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-                  placeholder="Ej: JUAN PÉREZ"
-                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                  placeholder="Nombre completo del usuario"
+                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                 />
               </div>
 
@@ -384,7 +384,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
                   value={form.cedula}
                   onChange={e => setForm(f => ({ ...f, cedula: e.target.value }))}
                   placeholder="Número de cédula"
-                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                 />
               </div>
 
@@ -401,7 +401,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
                       rol: e.target.value as Rol,
                       tiendasRoles: {},
                     }))}
-                    className="w-full appearance-none bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                    className="w-full appearance-none bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                   >
                     <option value="SUPERADMIN">SuperAdmin — acceso total</option>
                     <option value="ADMIN">Admin — gestión de tiendas</option>
@@ -555,7 +555,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
 
               {/* Error */}
               {error && (
-                <div className="flex items-center gap-2 bg-red-950/50 border border-red-900/60 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 bg-red-950/50 border border-red-900/60 rounded-xl px-4 py-3 anim-fade-up">
                   <AlertCircle size={14} className="text-red-400 shrink-0" />
                   <p className="text-xs text-red-400">{error}</p>
                 </div>
@@ -573,7 +573,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-prp to-ind text-white text-sm font-semibold shadow-lg shadow-prp/20 hover:brightness-110 active:scale-[0.97] transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-prp to-ind text-white text-sm font-semibold shadow-lg shadow-prp/20 hover:brightness-110 active:scale-[0.97] transition-all disabled:opacity-50 btn-press"
               >
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 {saving ? 'Guardando…' : 'Guardar'}

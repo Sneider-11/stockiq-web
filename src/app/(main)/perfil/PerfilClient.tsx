@@ -62,7 +62,7 @@ export default function PerfilClient() {
               value={currentPass}
               onChange={e => setCurrentPass(e.target.value)}
               placeholder="Tu contraseña actual"
-              className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+              className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
             />
             <button type="button" onClick={() => setShowCurrent(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
               {showCurrent ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -82,7 +82,7 @@ export default function PerfilClient() {
               value={newPass}
               onChange={e => setNewPass(e.target.value)}
               placeholder="Mínimo 6 caracteres"
-              className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+              className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
             />
             <button type="button" onClick={() => setShowNew(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
               {showNew ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -102,7 +102,7 @@ export default function PerfilClient() {
               value={confirmPass}
               onChange={e => setConfirmPass(e.target.value)}
               placeholder="Repite la contraseña"
-              className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+              className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
             />
             <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
               {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -112,13 +112,13 @@ export default function PerfilClient() {
 
         {/* Feedback */}
         {error && (
-          <div className="flex items-center gap-2 bg-red-950/50 border border-red-900/60 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-2 bg-red-950/50 border border-red-900/60 rounded-xl px-4 py-3 anim-fade-up">
             <AlertCircle size={14} className="text-red-400 shrink-0" />
             <p className="text-xs text-red-400">{error}</p>
           </div>
         )}
         {success && (
-          <div className="flex items-center gap-2 bg-emerald-950/50 border border-emerald-900/60 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-2 bg-emerald-950/50 border border-emerald-900/60 rounded-xl px-4 py-3 anim-fade-up">
             <CheckCircle size={14} className="text-emerald-400 shrink-0" />
             <p className="text-xs text-emerald-400">Contraseña actualizada correctamente.</p>
           </div>
@@ -127,7 +127,7 @@ export default function PerfilClient() {
         <button
           onClick={handleSubmit}
           disabled={isPending}
-          className="w-full h-10 bg-gradient-to-r from-prp to-ind rounded-xl font-bold text-white text-sm shadow-lg shadow-prp/20 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full h-10 bg-gradient-to-r from-prp to-ind rounded-xl font-bold text-white text-sm shadow-lg shadow-prp/20 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 btn-press"
         >
           {isPending ? <Loader2 size={15} className="animate-spin" /> : <Lock size={15} />}
           {isPending ? 'Guardando…' : 'Actualizar contraseña'}

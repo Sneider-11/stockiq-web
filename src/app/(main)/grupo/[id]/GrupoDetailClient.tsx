@@ -68,7 +68,7 @@ export default function GrupoDetailClient({ grupo, tiendas: allTiendas, usuarios
 
       {/* ── Stats rápidos ── */}
       <div className="grid grid-cols-2 gap-3 mb-7">
-        <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/60 p-4 flex items-center gap-3">
+        <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/60 p-4 flex items-center gap-3 anim-fade-up" style={{ animationDelay: '40ms' }}>
           <div className="w-9 h-9 rounded-xl bg-sky-950/60 border border-sky-900/50 flex items-center justify-center shrink-0">
             <Store size={16} className="text-sky-400" />
           </div>
@@ -77,7 +77,7 @@ export default function GrupoDetailClient({ grupo, tiendas: allTiendas, usuarios
             <p className="text-xs text-zinc-500">Tiendas asignadas</p>
           </div>
         </div>
-        <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/60 p-4 flex items-center gap-3">
+        <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/60 p-4 flex items-center gap-3 anim-fade-up" style={{ animationDelay: '80ms' }}>
           <div className="w-9 h-9 rounded-xl bg-purple-950/60 border border-purple-900/50 flex items-center justify-center shrink-0">
             <Users size={16} className="text-vlt" />
           </div>
@@ -90,7 +90,7 @@ export default function GrupoDetailClient({ grupo, tiendas: allTiendas, usuarios
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ── Columna izquierda: Tiendas del grupo ── */}
-        <div>
+        <div className="anim-slide-right" style={{ animationDelay: '100ms' }}>
           <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
             <Store size={13} />
             Tiendas en este grupo
@@ -127,7 +127,7 @@ export default function GrupoDetailClient({ grupo, tiendas: allTiendas, usuarios
                       onClick={() => handleToggleTienda(t.id, 'quitar')}
                       disabled={toggling === t.id}
                       title="Quitar del grupo"
-                      className="p-1.5 rounded-lg text-zinc-600 hover:text-red-400 hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                      className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50 btn-press"
                     >
                       {toggling === t.id
                         ? <Loader2 size={13} className="animate-spin" />
@@ -148,7 +148,7 @@ export default function GrupoDetailClient({ grupo, tiendas: allTiendas, usuarios
           {/* Tiendas disponibles para añadir */}
           {tiendasLibres.length > 0 && (
             <div className="mt-4">
-              <h3 className="text-[11px] font-semibold text-zinc-600 uppercase tracking-widest mb-2">
+              <h3 className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest mb-2">
                 Tiendas sin grupo — disponibles
               </h3>
               <div className="space-y-1.5">
@@ -177,7 +177,7 @@ export default function GrupoDetailClient({ grupo, tiendas: allTiendas, usuarios
         </div>
 
         {/* ── Columna derecha: Usuarios del grupo ── */}
-        <div>
+        <div className="anim-slide-left" style={{ animationDelay: '140ms' }}>
           <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
             <Users size={13} />
             Usuarios en este grupo

@@ -1,6 +1,16 @@
 @import "tailwindcss";
 
-/* ── Dark Space Edition 2026 — Design System ─────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   STOCKIQ — Dark Space Design System
+   Motion & Animation Overhaul 2026
+   Principios:
+   · Solo transform + opacity en animaciones (no layout reflows)
+   · Easing consistente: spring para entradas, ease para hovers
+   · Distancias pequeñas: 6-10px (no 18-24px que se sienten bruscas)
+   · Tiempos: 150ms hover, 300-380ms entrada, 2-4s ambient
+   · prefers-reduced-motion: respetado
+══════════════════════════════════════════════════════════ */
+
 @theme {
   /* Brand */
   --color-prp:  #7C3AED;
@@ -24,10 +34,13 @@
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
-/* ── Class-based dark mode (Tailwind v4) ─────────────────────────────────── */
+/* ── Dark mode ─────────────────────────────────────────── */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ── Base ─────────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   BASE
+══════════════════════════════════════════════════════════ */
+
 :root { color-scheme: dark; }
 
 html {
@@ -42,77 +55,98 @@ body {
   font-family: var(--font-sans);
 }
 
-/* ── Scrollbar ────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #52525B; }
+::-webkit-scrollbar-thumb {
+  background: #3F3F46;
+  border-radius: 9999px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover { background: #71717A; }
 
-/* ── Selection ────────────────────────────────────────────────────────────── */
-::selection { background: rgba(124,58,237,0.30); }
+/* ── Selection ─────────────────────────────────────────── */
+::selection { background: rgba(124,58,237,0.25); color: inherit; }
 
-/* ═══════════════════════════════════════════════════════
+/* ── Focus visible (accessibility) ─────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(124,58,237,0.55);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ══════════════════════════════════════════════════════════
    KEYFRAMES
-═══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════ */
 
+/* ── Página / layout ─────────────────────────────────── */
+@keyframes pageSlideIn {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.998); }
+  100% { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ── Entradas ────────────────────────────────────────── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  0%   { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.94); }
-  to   { opacity: 1; transform: scale(1); }
+  0%   { opacity: 0; transform: scale(0.96) translateY(8px); }
+  100% { opacity: 1; transform: scale(1)    translateY(0); }
 }
 
 @keyframes slideInRight {
-  from { opacity: 0; transform: translateX(18px); }
-  to   { opacity: 1; transform: translateX(0); }
+  0%   { opacity: 0; transform: translateX(-10px); }
+  100% { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-24px); }
-  to   { opacity: 1; transform: translateX(0); }
+  0%   { opacity: 0; transform: translateX(10px); }
+  100% { opacity: 1; transform: translateX(0); }
 }
 
+/* ── Drawer ─────────────────────────────────────────── */
 @keyframes slideDrawer {
-  from { opacity: 0; transform: translateX(-100%); }
-  to   { opacity: 1; transform: translateX(0); }
+  0%   { opacity: 0; transform: translateX(-100%); }
+  100% { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
-
+/* ── Ambiente / loops ───────────────────────────────── */
 @keyframes pulseDot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(0.85); }
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(0.75); }
+}
+
+/* Live dot — efecto radar */
+@keyframes ringExpand {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  100% { transform: scale(2.6); opacity: 0; }
 }
 
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
-  50%       { box-shadow: 0 0 0 6px rgba(124,58,237,0); }
+  0%, 100% { box-shadow: 0 0 0 0   rgba(124,58,237,0.5); }
+  50%       { box-shadow: 0 0 0 7px rgba(124,58,237,0); }
 }
 
 @keyframes glowPulseGreen {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
-  50%       { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+  0%, 100% { box-shadow: 0 0 0 0   rgba(16,185,129,0.5); }
+  50%       { box-shadow: 0 0 0 7px rgba(16,185,129,0); }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-4px); }
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
 }
 
 @keyframes gradientShift {
@@ -121,38 +155,80 @@ body {
   100% { background-position: 0% 50%; }
 }
 
+/* ── Shimmer skeleton ───────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -700px 0; }
+  100% { background-position:  700px 0; }
+}
+
+/* ── Progreso ───────────────────────────────────────── */
 @keyframes progressFill {
-  from { width: 0%; }
+  0%   { width: 0%; }
 }
 
-@keyframes pageSlideIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
+/* ── Count up ───────────────────────────────────────── */
 @keyframes countUp {
-  from { transform: translateY(6px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Flash ──────────────────────────────────────────── */
+@keyframes flashHighlight {
+  0%   { background-color: rgba(124,58,237,0.18); }
+  100% { background-color: transparent; }
+}
+
+/* ── Glow ambiental login (deriva lenta) ────────────── */
+@keyframes glowDrift {
+  0%,  100% { transform: translate(0,    0)    scale(1);    opacity: 0.07; }
+  33%        { transform: translate(24px, -18px) scale(1.08); opacity: 0.10; }
+  66%        { transform: translate(-14px, 12px) scale(0.95); opacity: 0.06; }
+}
+
+@keyframes glowDrift2 {
+  0%,  100% { transform: translate(0,    0)    scale(1);    opacity: 0.05; }
+  40%        { transform: translate(-20px, 16px) scale(1.06); opacity: 0.08; }
+  70%        { transform: translate(18px, -10px) scale(0.97); opacity: 0.04; }
+}
+
+/* ── Border glow ────────────────────────────────────── */
 @keyframes borderGlow {
-  0%, 100% { border-color: rgba(124,58,237,0.3); }
-  50%       { border-color: rgba(124,58,237,0.7); }
+  0%, 100% { border-color: rgba(124,58,237,0.25); }
+  50%       { border-color: rgba(124,58,237,0.60); }
 }
 
-/* ═══════════════════════════════════════════════════════
-   ANIMATION UTILITY CLASSES
-═══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════
+   CLASES DE ANIMACIÓN DE ENTRADA
+   will-change solo en entradas puntuales, nunca en page-transition
+══════════════════════════════════════════════════════════ */
 
-/* Entrance animations */
-.anim-fade-up    { animation: fadeInUp  0.4s cubic-bezier(.16,1,.3,1) both; }
-.anim-fade-in    { animation: fadeIn    0.3s ease-out both; }
-.anim-scale-in   { animation: scaleIn   0.35s cubic-bezier(.16,1,.3,1) both; }
-.anim-slide-right { animation: slideInRight 0.35s cubic-bezier(.16,1,.3,1) both; }
-.anim-slide-left  { animation: slideInLeft  0.35s cubic-bezier(.16,1,.3,1) both; }
+.anim-fade-up {
+  animation: fadeInUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
 
-/* Stagger delays */
-.delay-50  { animation-delay: 50ms; }
+.anim-fade-in {
+  animation: fadeIn 0.3s ease-out both;
+  will-change: opacity;
+}
+
+.anim-scale-in {
+  animation: scaleIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.anim-slide-right {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.anim-slide-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+/* ── Stagger delays ─────────────────────────────────── */
+.delay-50  { animation-delay:  50ms; }
 .delay-100 { animation-delay: 100ms; }
 .delay-150 { animation-delay: 150ms; }
 .delay-200 { animation-delay: 200ms; }
@@ -161,119 +237,172 @@ body {
 .delay-400 { animation-delay: 400ms; }
 .delay-500 { animation-delay: 500ms; }
 
-/* Mobile drawer */
-.mobile-drawer-enter {
-  animation: slideDrawer 0.3s cubic-bezier(.16,1,.3,1) both;
-}
-
-/* ── Page transition (layout-level, re-triggers on every navigation) ──────── */
-/* NO will-change aquí — crearía un stacking context que rompe position:fixed */
+/* ── Transición de página ───────────────────────────── */
+/* SIN will-change: rompería el stacking context de modales */
 .page-transition-root {
-  animation: pageSlideIn 0.28s cubic-bezier(.16,1,.3,1) both;
+  animation: pageSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Page-level wrapper (kept for compatibility, plays inside transition-root) */
+/* Wrapper de contenido de página */
 .page-enter {
-  animation: fadeInUp 0.35s cubic-bezier(.16,1,.3,1) both;
-  animation-delay: 40ms;
+  animation: fadeInUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 24ms;
   animation-fill-mode: both;
 }
 
-/* ── Accordion ──────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   COMPONENTES
+══════════════════════════════════════════════════════════ */
+
+/* ── Accordion ──────────────────────────────────────── */
 .accordion-content {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.35s cubic-bezier(.16,1,.3,1);
+  transition: grid-template-rows 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.accordion-content.open {
-  grid-template-rows: 1fr;
-}
-.accordion-inner {
-  overflow: hidden;
-}
+.accordion-content.open { grid-template-rows: 1fr; }
+.accordion-inner { overflow: hidden; }
 
-/* ── Modal ─────────────────────────────────────────────────────────────── */
+/* ── Modal ──────────────────────────────────────────── */
 .modal-backdrop {
-  animation: fadeIn 0.2s ease-out both;
+  animation: fadeIn 0.18s ease-out both;
+  will-change: opacity;
 }
 .modal-card {
-  animation: scaleIn 0.3s cubic-bezier(.16,1,.3,1) both;
+  animation: scaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
 }
 
-/* ── Shimmer skeleton ───────────────────────────────────────────────────── */
+/* ── Drawer móvil ───────────────────────────────────── */
+.mobile-drawer-enter {
+  animation: slideDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+/* ── Shimmer skeleton ───────────────────────────────── */
 .shimmer {
   background: linear-gradient(
     90deg,
     #18181B 0%,
-    #1f1f23 20%,
-    #2d2d33 40%,
-    #1f1f23 60%,
-    #18181B 80%
+    #1c1c22 20%,
+    #2a2a34 45%,
+    #1c1c22 70%,
+    #18181B 100%
   );
-  background-size: 600px 100%;
-  animation: shimmer 1.6s ease-in-out infinite;
+  background-size: 800px 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
 }
 
-/* ── Live dot (active indicator) ────────────────────────────────────────── */
+/* ── Live dot (efecto radar) ────────────────────────── */
 .live-dot {
+  position: relative;
   display: inline-block;
   width: 7px;
   height: 7px;
   border-radius: 9999px;
   background: #10B981;
-  animation: pulseDot 2s ease-in-out infinite;
+  flex-shrink: 0;
 }
-.live-dot-amber {
-  background: #F59E0B;
+.live-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: #10B981;
+  animation: ringExpand 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-.live-dot-red {
-  background: #EF4444;
-}
+.live-dot-amber          { background: #F59E0B; }
+.live-dot-amber::after   { background: #F59E0B; }
+.live-dot-red            { background: #EF4444; }
+.live-dot-red::after     { background: #EF4444; }
 
-/* ── Glow effects ───────────────────────────────────────────────────────── */
-.glow-prp  { animation: glowPulse      2.5s ease-in-out infinite; }
+/* ── Glow effects ───────────────────────────────────── */
+.glow-prp   { animation: glowPulse      2.5s ease-in-out infinite; }
 .glow-green { animation: glowPulseGreen 2.5s ease-in-out infinite; }
 
-/* ── Animated gradient text ─────────────────────────────────────────────── */
+/* ── Texto gradiente animado ────────────────────────── */
 .gradient-text {
-  background: linear-gradient(135deg, #A78BFA, #6366F1, #A78BFA);
-  background-size: 200% 200%;
+  background: linear-gradient(135deg, #A78BFA, #6366F1, #C4B5FD, #A78BFA);
+  background-size: 250% 250%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gradientShift 4s ease infinite;
+  animation: gradientShift 5s ease infinite;
 }
 
-/* ── Float (decorative icons) ───────────────────────────────────────────── */
-.float {
-  animation: float 3s ease-in-out infinite;
-}
+/* ── Flotación ──────────────────────────────────────── */
+.float { animation: float 3.5s ease-in-out infinite; }
 
-/* ── Count-up number reveal ─────────────────────────────────────────────── */
+/* ── Count reveal ───────────────────────────────────── */
 .count-reveal {
-  animation: countUp 0.5s cubic-bezier(.16,1,.3,1) both;
+  animation: countUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
 }
 
-/* ── Card hover glow ────────────────────────────────────────────────────── */
+/* ── Progress bar ───────────────────────────────────── */
+.progress-bar-animated {
+  will-change: width;
+  animation: progressFill 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Card hover ─────────────────────────────────────── */
 .card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform    0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow   0.22s ease,
+    border-color 0.22s ease;
 }
 .card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transform:   translateY(-2px);
+  box-shadow:  0 14px 44px rgba(0,0,0,0.50);
 }
 
-/* ── Progress bar animated fill ─────────────────────────────────────────── */
-.progress-bar-animated {
-  animation: progressFill 1s cubic-bezier(.16,1,.3,1) both;
-}
-
-/* ── Stat number update flash ───────────────────────────────────────────── */
-@keyframes flashHighlight {
-  0%   { background: rgba(124,58,237,0.15); }
-  100% { background: transparent; }
-}
+/* ── Flash ──────────────────────────────────────────── */
 .flash {
-  animation: flashHighlight 0.6s ease-out;
+  animation: flashHighlight 0.5s ease-out;
   border-radius: 6px;
+}
+
+/* ── Border glow animado ────────────────────────────── */
+.border-glow-anim { animation: borderGlow 2.5s ease-in-out infinite; }
+
+/* ── Login — glows ambientales ──────────────────────── */
+.login-glow-1 { animation: glowDrift  14s ease-in-out infinite; }
+.login-glow-2 { animation: glowDrift2 18s ease-in-out infinite; }
+
+/* ══════════════════════════════════════════════════════════
+   MICRO-INTERACCIONES GLOBALES
+   Elementos interactivos con comportamiento consistente
+══════════════════════════════════════════════════════════ */
+
+/* Botones con scale en press — clase utilitaria */
+.btn-press {
+  transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.btn-press:hover  { filter: brightness(1.08); }
+.btn-press:active { transform: scale(0.97); }
+
+/* Input focus ring consistente */
+.input-field {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.input-field:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.22);
+}
+
+/* ══════════════════════════════════════════════════════════
+   PREFERS-REDUCED-MOTION
+   Respeta la preferencia del sistema operativo
+══════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration:        0.01ms !important;
+    animation-iteration-count: 1      !important;
+    transition-duration:       0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

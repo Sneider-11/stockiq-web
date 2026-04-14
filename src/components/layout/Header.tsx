@@ -16,10 +16,10 @@ export function Header({ user, title }: Props) {
   return (
     <>
       <header className="h-16 flex items-center justify-between px-6 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-md shrink-0 z-30 relative">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 anim-slide-right" style={{ animationDelay: '40ms' }}>
           <button
             onClick={() => setMobileOpen(true)}
-            className="lg:hidden p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all active:scale-95"
+            className="lg:hidden p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all active:scale-95 btn-press"
             aria-label="Abrir menú"
           >
             <Menu size={20} />
@@ -29,15 +29,15 @@ export function Header({ user, title }: Props) {
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 anim-slide-left" style={{ animationDelay: '60ms' }}>
           <button
-            className="relative p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+            className="relative p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all btn-press"
             aria-label="Notificaciones"
           >
             <Bell size={18} />
           </button>
           <div className="flex items-center gap-2.5 pl-3 border-l border-zinc-800">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-prp to-ind flex items-center justify-center text-white text-xs font-black ring-2 ring-prp/20 hover:ring-prp/50 transition-all">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-prp to-ind flex items-center justify-center text-white text-xs font-black ring-2 ring-prp/20 hover:ring-prp/40 hover:scale-105 transition-all duration-200 cursor-default">
               {user.nombre.charAt(0)}
             </div>
             <div className="hidden sm:block">

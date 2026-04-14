@@ -91,24 +91,24 @@ export default function LoginPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-spc flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-prp/8 blur-[120px]" />
-        <div className="absolute top-2/3 left-1/3 w-[300px] h-[300px] rounded-full bg-ind/6 blur-[100px]" />
+      {/* Background glow — deriva lenta y suave */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="login-glow-1 absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[640px] rounded-full bg-prp blur-[130px]" />
+        <div className="login-glow-2 absolute top-2/3 left-1/3 w-[320px] h-[320px] rounded-full bg-ind blur-[110px]" />
       </div>
 
       <div className="w-full max-w-md relative z-10">
         {/* Brand */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-prp to-ind flex items-center justify-center shadow-2xl shadow-prp/40 mb-4">
+        <div className="flex flex-col items-center mb-8 anim-fade-in" style={{ animationDelay: '60ms' }}>
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-prp to-ind flex items-center justify-center shadow-2xl shadow-prp/40 mb-4 float">
             <Layers size={28} className="text-white" />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">StockIQ</h1>
+          <h1 className="text-2xl font-black text-white tracking-tight gradient-text">StockIQ</h1>
           <p className="text-sm text-zinc-500 mt-1">Plataforma de Auditoría</p>
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/70 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/70 backdrop-blur-xl shadow-2xl overflow-hidden anim-scale-in" style={{ animationDelay: '80ms' }}>
           {/* Specular highlight */}
           <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-600/40 to-transparent" />
 
@@ -131,9 +131,9 @@ export default function LoginPage() {
                       value={cedula}
                       onChange={e => setCedula(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Ej: 1004807039"
+                      placeholder="Tu número de cédula"
                       suppressHydrationWarning
-                      className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                      className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                     />
                   </div>
                 </div>
@@ -152,7 +152,7 @@ export default function LoginPage() {
                       onKeyDown={handleKeyDown}
                       placeholder="Tu contraseña web"
                       suppressHydrationWarning
-                      className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                      className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                     />
                     <button
                       type="button"
@@ -166,7 +166,7 @@ export default function LoginPage() {
 
                 {/* Error */}
                 {error && (
-                  <div className="flex items-center gap-2 bg-red-950/50 border border-red-900/60 rounded-xl px-3 py-2.5 mb-4">
+                  <div className="flex items-center gap-2 bg-red-950/50 border border-red-900/60 rounded-xl px-3 py-2.5 mb-4 anim-fade-up">
                     <AlertCircle size={14} className="text-red-400 shrink-0" />
                     <p className="text-xs text-red-400">{error}</p>
                   </div>
@@ -176,7 +176,7 @@ export default function LoginPage() {
                 <button
                   onClick={handleLogin}
                   disabled={isPending}
-                  className="w-full h-12 bg-gradient-to-r from-prp to-ind rounded-xl font-bold text-white text-sm shadow-lg shadow-prp/30 hover:shadow-prp/50 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full h-12 bg-gradient-to-r from-prp to-ind rounded-xl font-bold text-white text-sm shadow-lg shadow-prp/30 hover:shadow-prp/50 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 btn-press"
                 >
                   {isPending ? <Spinner className="text-white" /> : 'Ingresar'}
                 </button>
@@ -206,7 +206,7 @@ export default function LoginPage() {
                       onChange={e => setNewPass(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Mínimo 6 caracteres"
-                      className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                      className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                     />
                     <button type="button" onClick={() => setShowNew(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
                       {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -226,7 +226,7 @@ export default function LoginPage() {
                       onChange={e => setConfirmPass(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Repite la contraseña"
-                      className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                      className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl pl-10 pr-12 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                     />
                     <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
                       {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -235,7 +235,7 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <div className="flex items-center gap-2 bg-red-950/50 border border-red-900/60 rounded-xl px-3 py-2.5 mb-4">
+                  <div className="flex items-center gap-2 bg-red-950/50 border border-red-900/60 rounded-xl px-3 py-2.5 mb-4 anim-fade-up">
                     <AlertCircle size={14} className="text-red-400 shrink-0" />
                     <p className="text-xs text-red-400">{error}</p>
                   </div>
@@ -244,7 +244,7 @@ export default function LoginPage() {
                 <button
                   onClick={handleSetup}
                   disabled={isPending}
-                  className="w-full h-12 bg-gradient-to-r from-prp to-ind rounded-xl font-bold text-white text-sm shadow-lg shadow-prp/30 hover:shadow-prp/50 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full h-12 bg-gradient-to-r from-prp to-ind rounded-xl font-bold text-white text-sm shadow-lg shadow-prp/30 hover:shadow-prp/50 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 btn-press"
                 >
                   {isPending ? <Spinner className="text-white" /> : 'Guardar y entrar'}
                 </button>

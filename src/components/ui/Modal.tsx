@@ -20,10 +20,13 @@ export function Modal({ onClose, children }: Props) {
     setMounted(true);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
+      document.removeEventListener('keydown', onKey);
     };
-  }, []);
+  }, [onClose]);
 
   if (!mounted) return null;
 

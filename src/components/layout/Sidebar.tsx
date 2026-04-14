@@ -44,12 +44,12 @@ export function Sidebar({ user }: Props) {
   return (
     <aside className="flex flex-col w-64 h-full bg-zinc-950 border-r border-zinc-800/60 shrink-0">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 h-16 border-b border-zinc-800/60 shrink-0">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-prp to-ind flex items-center justify-center shadow-lg shadow-prp/30 hover:shadow-prp/50 transition-shadow">
+      <div className="flex items-center gap-3 px-5 h-16 border-b border-zinc-800/60 shrink-0 anim-fade-in">
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-prp to-ind flex items-center justify-center shadow-lg shadow-prp/30 hover:shadow-prp/50 transition-shadow float">
           <Layers size={16} className="text-white" />
         </div>
         <div>
-          <span className="text-sm font-black text-white tracking-tight">StockIQ</span>
+          <span className="text-sm font-black text-white tracking-tight gradient-text">StockIQ</span>
           <span className="block text-[10px] text-zinc-500 -mt-0.5">Plataforma Web</span>
         </div>
       </div>
@@ -90,7 +90,7 @@ export function Sidebar({ user }: Props) {
       </nav>
 
       {/* User + Logout */}
-      <div className="px-3 pb-4 border-t border-zinc-800/60 pt-3 space-y-1 shrink-0">
+      <div className="px-3 pb-4 border-t border-zinc-800/60 pt-3 space-y-1 shrink-0 anim-fade-up" style={{ animationDelay: '200ms' }}>
         <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800/40">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-prp to-ind flex items-center justify-center text-white text-xs font-black shrink-0 ring-2 ring-prp/20">
             {user.nombre.charAt(0)}
@@ -102,9 +102,9 @@ export function Sidebar({ user }: Props) {
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all duration-150 group"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all duration-150 group btn-press"
         >
-          <LogOut size={16} className="group-hover:rotate-12 transition-transform" />
+          <LogOut size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
           <span>Cerrar sesión</span>
         </button>
       </div>

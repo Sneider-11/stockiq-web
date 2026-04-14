@@ -46,11 +46,11 @@ export function MobileMenu({ user, onClose }: Props) {
         {/* Logo + close */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-zinc-800/60 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-prp to-ind flex items-center justify-center shadow-lg shadow-prp/30">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-prp to-ind flex items-center justify-center shadow-lg shadow-prp/30 float">
               <Layers size={16} className="text-white" />
             </div>
             <div>
-              <span className="text-sm font-black text-white tracking-tight">StockIQ</span>
+              <span className="text-sm font-black text-white tracking-tight gradient-text">StockIQ</span>
               <span className="block text-[10px] text-zinc-500 -mt-0.5">Plataforma Web</span>
             </div>
           </div>

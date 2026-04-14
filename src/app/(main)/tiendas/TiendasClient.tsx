@@ -267,8 +267,8 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
                   type="text"
                   value={form.nombre}
                   onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-                  placeholder="Ej: TIENDA NORTE"
-                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                  placeholder="Nombre de la tienda o sede"
+                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                 />
               </div>
 
@@ -281,8 +281,8 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
                   type="text"
                   value={form.nit}
                   onChange={e => setForm(f => ({ ...f, nit: e.target.value }))}
-                  placeholder="Ej: 900123456-7"
-                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                  placeholder="NIT de la empresa"
+                  className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
                 />
               </div>
 
@@ -324,7 +324,7 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
                     <Package size={14} />
                   </div>
                   <span className="text-sm font-semibold text-zinc-200">
-                    {form.nombre.trim().toUpperCase() || 'NOMBRE TIENDA'}
+                    {form.nombre.trim().toUpperCase() || 'VISTA PREVIA'}
                   </span>
                 </div>
               </div>
@@ -346,7 +346,7 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-prp to-ind text-white text-sm font-semibold shadow-lg shadow-prp/20 hover:brightness-110 active:scale-[0.97] transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-prp to-ind text-white text-sm font-semibold shadow-lg shadow-prp/20 hover:brightness-110 active:scale-[0.97] transition-all disabled:opacity-50 btn-press"
               >
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 {saving ? 'Guardando…' : 'Guardar'}
