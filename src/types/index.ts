@@ -3,6 +3,15 @@
 // stockiq/src/constants/data.ts
 
 export type Rol = 'SUPERADMIN' | 'ADMIN' | 'CONTADOR';
+
+// ─── Grupos Comerciales ───────────────────────────────────────────────────────
+export interface GrupoComercial {
+  id:          string;
+  nombre:      string;
+  color:       string;
+  descripcion?: string;
+  creadoEn:    string;
+}
 export type Clasificacion = 'SIN_DIF' | 'FALTANTE' | 'SOBRANTE' | 'CERO';
 export type EstadoSobrante = 'CONFIRMADO' | 'PENDIENTE';
 
@@ -13,6 +22,7 @@ export interface Usuario {
   rol: Rol;
   tiendas: string[];
   tiendasRoles: Record<string, 'ADMIN' | 'CONTADOR'>;
+  grupos: string[];          // IDs de GrupoComercial asignados
   telefono?: string;
   activo?: boolean;
   creadoPor?: string;
@@ -25,6 +35,7 @@ export interface Tienda {
   icono: string;
   color: string;
   nit?: string;
+  grupoId?: string;          // ID del GrupoComercial al que pertenece
   modoInventario?: 'ONLINE' | 'OFFLINE';
   cerradoPor?: string;
 }
@@ -75,6 +86,17 @@ export interface SessionUser {
   rol: Rol;
   tiendas: string[];
   tiendasRoles: Record<string, 'ADMIN' | 'CONTADOR'>;
+  grupos: string[];          // IDs de GrupoComercial asignados
+}
+
+// ─── Stats de grupo comercial (calculadas) ────────────────────────────────────
+export interface GrupoStats {
+  grupo:          GrupoComercial;
+  totalTiendas:   number;
+  tiendasActivas: number;
+  progresoGlobal: number;    // promedio de progreso de sus tiendas
+  valorFaltante:  number;
+  valorSobrante:  number;
 }
 
 // ─── Estadísticas de tienda (calculadas) ──────────────────────────────────────

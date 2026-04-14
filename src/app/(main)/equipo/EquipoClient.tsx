@@ -4,17 +4,18 @@ import { useState } from 'react';
 import {
   Users, Plus, Pencil, Trash2, X, Save, Loader2,
   Shield, Store, ToggleLeft, ToggleRight, AlertCircle,
-  ChevronDown, UserCheck, UserX,
+  ChevronDown, UserCheck, UserX, Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
-import type { Usuario, Tienda, SessionUser, Rol } from '@/types';
+import type { Usuario, Tienda, SessionUser, Rol, GrupoComercial } from '@/types';
 
 interface Props {
   initialUsuarios: Usuario[];
-  tiendas: Tienda[];
-  sessionUser: SessionUser;
+  tiendas:         Tienda[];
+  grupos:          GrupoComercial[];
+  sessionUser:     SessionUser;
 }
 
 type StoreRole = 'ADMIN' | 'CONTADOR';
@@ -26,13 +27,14 @@ interface FormState {
   rol:           Rol;
   tiendas:       string[];
   tiendasRoles:  Record<string, StoreRole>;
+  grupos:        string[];
   activo:        boolean;
   creadoPor?:    string;
 }
 
 const EMPTY: FormState = {
   nombre: '', cedula: '', rol: 'CONTADOR',
-  tiendas: [], tiendasRoles: {}, activo: true,
+  tiendas: [], tiendasRoles: {}, grupos: [], activo: true,
 };
 
 const ROL_COLORS: Record<Rol, string> = {
@@ -46,7 +48,7 @@ const ROL_LABEL: Record<Rol, string> = {
   CONTADOR:   'Contador',
 };
 
-export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: Props) {
+export default function EquipoClient({ initialUsuarios, tiendas, grupos, sessionUser }: Props) {
   const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
   const [modal,    setModal]    = useState(false);
   const [form,     setForm]     = useState<FormState>(EMPTY);
@@ -77,6 +79,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: 
       rol:          u.rol,
       tiendas:      u.tiendas,
       tiendasRoles: (u.tiendasRoles ?? {}) as Record<string, StoreRole>,
+      grupos:       u.grupos ?? [],
       activo:       u.activo ?? true,
       creadoPor:    u.creadoPor,
     });
@@ -125,7 +128,8 @@ export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: 
         setUsuarios(prev => prev.map(u =>
           u.id === form.id
             ? { ...u, nombre: form.nombre.toUpperCase(), cedula: form.cedula, rol: form.rol,
-                tiendas: form.tiendas, tiendasRoles: form.tiendasRoles, activo: form.activo }
+                tiendas: form.tiendas, tiendasRoles: form.tiendasRoles,
+                grupos: form.grupos, activo: form.activo }
             : u,
         ));
       } else {
@@ -136,6 +140,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: 
           rol:          form.rol,
           tiendas:      form.tiendas,
           tiendasRoles: form.tiendasRoles,
+          grupos:       form.grupos,
           activo:       form.activo,
           creadoPor:    sessionUser.id,
         };
@@ -243,8 +248,27 @@ export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: 
                   {u.activo === false && <Badge variant="danger">Inactivo</Badge>}
                 </div>
                 <p className="text-xs text-zinc-500 mt-0.5">CC {u.cedula}</p>
-                {u.tiendas.length > 0 && (
+                {/* Grupos */}
+                {(u.grupos ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1.5">
+                    {(u.grupos ?? []).map(gid => {
+                      const g = grupos.find(x => x.id === gid);
+                      if (!g) return null;
+                      return (
+                        <span
+                          key={gid}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold text-white border border-transparent"
+                          style={{ backgroundColor: `${g.color}33`, borderColor: `${g.color}55` }}
+                        >
+                          <Building2 size={9} style={{ color: g.color }} />
+                          <span style={{ color: g.color }}>{g.nombre}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                {u.tiendas.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
                     {u.tiendas.map(tid => {
                       const tienda = tiendas.find(t => t.id === tid);
                       const storeRol = (u.tiendasRoles as Record<string, string>)?.[tid];
@@ -391,6 +415,43 @@ export default function EquipoClient({ initialUsuarios, tiendas, sessionUser }: 
                   {form.rol === 'CONTADOR' && 'Solo puede escanear artículos en las tiendas asignadas.'}
                 </p>
               </div>
+
+              {/* Grupos asignados */}
+              {grupos.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                    <Building2 size={12} />
+                    Grupos comerciales
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {grupos.map(g => {
+                      const sel = form.grupos.includes(g.id);
+                      return (
+                        <button
+                          key={g.id}
+                          type="button"
+                          onClick={() => setForm(prev => ({
+                            ...prev,
+                            grupos: sel
+                              ? prev.grupos.filter(x => x !== g.id)
+                              : [...prev.grupos, g.id],
+                          }))}
+                          className={cn(
+                            'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border',
+                            sel
+                              ? 'text-white border-transparent scale-105'
+                              : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-zinc-100 hover:bg-zinc-700/60',
+                          )}
+                          style={sel ? { backgroundColor: g.color, boxShadow: `0 2px 10px ${g.color}50` } : undefined}
+                        >
+                          <Building2 size={11} />
+                          {g.nombre}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Tiendas asignadas */}
               <div>

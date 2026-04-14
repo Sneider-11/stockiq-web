@@ -17,9 +17,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { nombre, cedula, rol, tiendas, tiendasRoles, activo } = body as {
+    const { nombre, cedula, rol, tiendas, tiendasRoles, grupos, activo } = body as {
       nombre?: string; cedula?: string; rol?: string;
-      tiendas?: string[]; tiendasRoles?: Record<string, string>; activo?: boolean;
+      tiendas?: string[]; tiendasRoles?: Record<string, string>;
+      grupos?: string[]; activo?: boolean;
     };
 
     if (!nombre?.trim() || !cedula?.trim() || !rol) {
@@ -29,13 +30,14 @@ export async function POST(req: NextRequest) {
     const id = crypto.randomUUID();
     await dbUpsertUsuario({
       id,
-      nombre:      nombre.trim().toUpperCase(),
-      cedula:      cedula.trim(),
-      rol:         rol as 'SUPERADMIN' | 'ADMIN' | 'CONTADOR',
-      tiendas:     tiendas    ?? [],
+      nombre:       nombre.trim().toUpperCase(),
+      cedula:       cedula.trim(),
+      rol:          rol as 'SUPERADMIN' | 'ADMIN' | 'CONTADOR',
+      tiendas:      tiendas      ?? [],
       tiendasRoles: tiendasRoles ?? {},
-      activo:      activo ?? true,
-      creadoPor:   session.id,
+      grupos:       grupos       ?? [],
+      activo:       activo ?? true,
+      creadoPor:    session.id,
     });
 
     return NextResponse.json({ ok: true, id });

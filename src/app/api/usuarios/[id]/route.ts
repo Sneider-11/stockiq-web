@@ -13,7 +13,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const body = await req.json();
-    const { nombre, cedula, rol, tiendas, tiendasRoles, activo, creadoPor } = body;
+    const { nombre, cedula, rol, tiendas, tiendasRoles, grupos, activo, creadoPor } = body;
 
     if (!nombre?.trim() || !cedula?.trim() || !rol) {
       return NextResponse.json({ error: 'Datos incompletos.' }, { status: 400 });
@@ -21,12 +21,13 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
     await dbUpsertUsuario({
       id,
-      nombre:      nombre.trim().toUpperCase(),
-      cedula:      cedula.trim(),
+      nombre:       nombre.trim().toUpperCase(),
+      cedula:       cedula.trim(),
       rol,
-      tiendas:     tiendas      ?? [],
+      tiendas:      tiendas      ?? [],
       tiendasRoles: tiendasRoles ?? {},
-      activo:      activo ?? true,
+      grupos:       grupos       ?? [],
+      activo:       activo ?? true,
       creadoPor,
     });
 

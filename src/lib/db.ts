@@ -1,5 +1,59 @@
 import { supabase } from './supabase';
-import type { Tienda, Usuario, Articulo, Registro, SobranteSinStock, TiendaStats } from '../types';
+import type { Tienda, Usuario, Articulo, Registro, SobranteSinStock, TiendaStats, GrupoComercial, GrupoStats } from '../types';
+
+// ─── GRUPOS COMERCIALES ───────────────────────────────────────────────────────
+
+export async function dbGetGrupos(): Promise<GrupoComercial[]> {
+  const { data, error } = await supabase
+    .from('grupos_comerciales')
+    .select('*')
+    .order('creado_en');
+  if (error || !data) return [];
+  return data.map(r => ({
+    id:          r.id,
+    nombre:      r.nombre,
+    color:       r.color ?? '#6366F1',
+    descripcion: r.descripcion ?? undefined,
+    creadoEn:    r.creado_en,
+  }));
+}
+
+export async function dbCreateGrupo(
+  g: Pick<GrupoComercial, 'nombre' | 'color' | 'descripcion'>
+): Promise<{ id: string }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('grupos_comerciales') as any)
+    .insert({ nombre: g.nombre, color: g.color, descripcion: g.descripcion ?? null })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return { id: data.id };
+}
+
+export async function dbUpdateGrupo(
+  id: string,
+  g: Partial<Pick<GrupoComercial, 'nombre' | 'color' | 'descripcion'>>
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('grupos_comerciales') as any)
+    .update({ nombre: g.nombre, color: g.color, descripcion: g.descripcion ?? null })
+    .eq('id', id);
+}
+
+export async function dbDeleteGrupo(id: string): Promise<void> {
+  await supabase.from('grupos_comerciales').delete().eq('id', id);
+}
+
+// Asigna (o desvincula) una tienda a un grupo
+export async function dbAsignarTiendaAGrupo(
+  tiendaId: string,
+  grupoId: string | null,
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('tiendas') as any)
+    .update({ grupo_id: grupoId })
+    .eq('id', tiendaId);
+}
 
 // ─── TIENDAS ──────────────────────────────────────────────────────────────────
 
@@ -12,11 +66,12 @@ export async function dbGetTiendas(): Promise<Tienda[]> {
   return data.map(r => ({
     id:             r.id,
     nombre:         r.nombre,
-    icono:          r.icono  ?? 'storefront',
-    color:          r.color  ?? '#09090B',
-    nit:            r.nit    ?? undefined,
+    icono:          r.icono    ?? 'storefront',
+    color:          r.color    ?? '#09090B',
+    nit:            r.nit      ?? undefined,
+    grupoId:        r.grupo_id ?? undefined,
     modoInventario: r.modo_inventario ?? undefined,
-    cerradoPor:     r.cerrado_por    ?? undefined,
+    cerradoPor:     r.cerrado_por     ?? undefined,
   }));
 }
 
@@ -27,12 +82,15 @@ export async function dbUpsertTienda(
   if (modoInventario !== undefined) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase.from('tiendas') as any).upsert(
-      { id: t.id, nombre: t.nombre, icono: t.icono, color: t.color, nit: t.nit ?? null, modo_inventario: modoInventario },
+      { id: t.id, nombre: t.nombre, icono: t.icono, color: t.color, nit: t.nit ?? null,
+        grupo_id: t.grupoId ?? null, modo_inventario: modoInventario },
       { onConflict: 'id' },
     );
   } else {
-    await supabase.from('tiendas').upsert(
-      { id: t.id, nombre: t.nombre, icono: t.icono, color: t.color, nit: t.nit ?? null },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('tiendas') as any).upsert(
+      { id: t.id, nombre: t.nombre, icono: t.icono, color: t.color, nit: t.nit ?? null,
+        grupo_id: t.grupoId ?? null },
       { onConflict: 'id' },
     );
   }
@@ -60,7 +118,7 @@ function migrateRol(rol: string): Usuario['rol'] {
 export async function dbGetUsuarios(): Promise<Usuario[]> {
   const { data, error } = await supabase
     .from('usuarios')
-    .select('id,cedula,nombre,rol,tiendas,tiendas_roles,telefono,activo,creado_por,pass_web');
+    .select('id,cedula,nombre,rol,tiendas,tiendas_roles,grupos,telefono,activo,creado_por,pass_web');
   if (error || !data) return [];
   return data.map(r => ({
     id:           r.id,
@@ -69,6 +127,7 @@ export async function dbGetUsuarios(): Promise<Usuario[]> {
     rol:          migrateRol(r.rol),
     tiendas:      r.tiendas       ?? [],
     tiendasRoles: r.tiendas_roles ?? {},
+    grupos:       r.grupos        ?? [],
     telefono:     r.telefono      ?? undefined,
     activo:       r.activo        ?? true,
     creadoPor:    r.creado_por    ?? undefined,
@@ -79,7 +138,7 @@ export async function dbGetUsuarios(): Promise<Usuario[]> {
 export async function dbGetUsuarioByCedula(cedula: string): Promise<Usuario | null> {
   const { data, error } = await supabase
     .from('usuarios')
-    .select('id,cedula,nombre,rol,tiendas,tiendas_roles,telefono,activo,creado_por,pass_web')
+    .select('id,cedula,nombre,rol,tiendas,tiendas_roles,grupos,telefono,activo,creado_por,pass_web')
     .eq('cedula', cedula)
     .single();
   if (error || !data) return null;
@@ -90,6 +149,7 @@ export async function dbGetUsuarioByCedula(cedula: string): Promise<Usuario | nu
     rol:          migrateRol(data.rol),
     tiendas:      data.tiendas       ?? [],
     tiendasRoles: data.tiendas_roles ?? {},
+    grupos:       data.grupos        ?? [],
     telefono:     data.telefono      ?? undefined,
     activo:       data.activo        ?? true,
     creadoPor:    data.creado_por    ?? undefined,
@@ -102,7 +162,8 @@ export async function dbSetPassWeb(userId: string, passHash: string): Promise<vo
 }
 
 export async function dbUpsertUsuario(u: Omit<Usuario, 'passWeb'>): Promise<void> {
-  await supabase.from('usuarios').upsert(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('usuarios') as any).upsert(
     {
       id:            u.id,
       cedula:        u.cedula,
@@ -110,6 +171,7 @@ export async function dbUpsertUsuario(u: Omit<Usuario, 'passWeb'>): Promise<void
       rol:           u.rol,
       tiendas:       u.tiendas,
       tiendas_roles: u.tiendasRoles ?? {},
+      grupos:        u.grupos       ?? [],
       telefono:      u.telefono ?? null,
       activo:        u.activo ?? true,
       creado_por:    u.creadoPor ?? null,
@@ -220,6 +282,37 @@ export async function dbGetSobrantes(tiendaId?: string): Promise<SobranteSinStoc
     usuarioNombre: r.usuario_nombre,
     registradoEn:  r.registrado_en,
   }));
+}
+
+// ─── ESTADÍSTICAS por GRUPO (calculadas) ─────────────────────────────────────
+
+export async function dbGetGruposConStats(
+  grupoIds?: string[], // si se pasa, filtra solo esos grupos
+): Promise<GrupoStats[]> {
+  const [grupos, allStats] = await Promise.all([
+    dbGetGrupos(),
+    dbGetTiendasConStats(),
+  ]);
+
+  const gruposFiltrados = grupoIds
+    ? grupos.filter(g => grupoIds.includes(g.id))
+    : grupos;
+
+  return gruposFiltrados.map(grupo => {
+    const tiendaStats = allStats.filter(s => s.tienda.grupoId === grupo.id);
+    const tiendasActivas = tiendaStats.filter(s => s.tienda.modoInventario !== 'OFFLINE').length;
+    const progresoGlobal = tiendaStats.length
+      ? Math.round(tiendaStats.reduce((a, s) => a + s.progreso, 0) / tiendaStats.length)
+      : 0;
+    return {
+      grupo,
+      totalTiendas:   tiendaStats.length,
+      tiendasActivas,
+      progresoGlobal,
+      valorFaltante:  tiendaStats.reduce((a, s) => a + s.valorFaltante, 0),
+      valorSobrante:  tiendaStats.reduce((a, s) => a + s.valorSobrante, 0),
+    };
+  });
 }
 
 // ─── ESTADÍSTICAS (calculadas) ────────────────────────────────────────────────

@@ -2,16 +2,16 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { getSession } from '@/lib/auth';
-import { dbGetTiendasConStats } from '@/lib/db';
+import { dbGetTiendasConStats, dbGetGrupos } from '@/lib/db';
 import { formatCOP } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import {
   TrendingDown, TrendingUp, Boxes, CheckCircle,
   ChevronRight, AlertCircle, Activity, BarChart3,
-  ScanLine, Hash, Zap,
+  ScanLine, Hash, Zap, Building2,
 } from 'lucide-react';
-import type { TiendaStats } from '@/types';
+import type { TiendaStats, GrupoComercial } from '@/types';
 
 function ProgresoBar({ value }: { value: number }) {
   const color =
@@ -200,21 +200,96 @@ function GlobalSummary({ stats }: { stats: TiendaStats[] }) {
   );
 }
 
-export default async function HomePage() {
-  const user     = await getSession();
-  const allStats = await dbGetTiendasConStats();
+// ── Sección de un grupo con sus tiendas ──────────────────────────────────────
+function GrupoSection({
+  grupo, stats, startIndex,
+}: {
+  grupo: GrupoComercial;
+  stats: TiendaStats[];
+  startIndex: number;
+}) {
+  const activas  = stats.filter(s => s.tienda.modoInventario !== 'OFFLINE').length;
+  const progreso = stats.length
+    ? Math.round(stats.reduce((a, s) => a + s.progreso, 0) / stats.length)
+    : 0;
 
+  return (
+    <div className="mb-8 anim-fade-up" style={{ animationDelay: `${startIndex * 30}ms` }}>
+      {/* Cabecera del grupo */}
+      <div className="flex items-center gap-3 mb-3">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0"
+          style={{ backgroundColor: grupo.color, boxShadow: `0 2px 8px ${grupo.color}50` }}
+        >
+          <Building2 size={13} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-sm font-black text-zinc-200 tracking-tight">{grupo.nombre}</h2>
+          {grupo.descripcion && (
+            <p className="text-[11px] text-zinc-600 truncate">{grupo.descripcion}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-3 text-[11px] text-zinc-500 shrink-0">
+          <span>{activas}/{stats.length} activas</span>
+          <span
+            className={
+              progreso >= 80 ? 'text-emerald-400 font-bold' :
+              progreso >= 40 ? 'text-amber-400 font-bold' : 'text-red-400 font-bold'
+            }
+          >
+            {progreso}%
+          </span>
+        </div>
+      </div>
+      {/* Grid de tiendas del grupo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {stats.map((s, i) => (
+          <TiendaCard key={s.tienda.id} stats={s} index={startIndex + i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default async function HomePage() {
+  const user = await getSession();
+  const [allStats, grupos] = await Promise.all([
+    dbGetTiendasConStats(),
+    dbGetGrupos(),
+  ]);
+
+  // Filtrar las tiendas visibles según el rol
   const stats = user?.rol === 'SUPERADMIN'
     ? allStats
     : allStats.filter(s => user?.tiendas.includes(s.tienda.id));
 
   const tiendasCerradas = stats.filter(s => s.tienda.modoInventario === 'OFFLINE').length;
-  const hora = new Date().getHours();
-  const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches';
+  const hora    = new Date().getHours();
+  const saludo  = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches';
+
+  // Construir la vista por grupos
+  // Para usuarios normales: solo los grupos a los que pertenecen
+  const gruposVisibles = user?.rol === 'SUPERADMIN'
+    ? grupos
+    : grupos.filter(g => user?.grupos.includes(g.id));
+
+  // Tiendas por grupo (solo las visibles para este usuario)
+  const tiendaPorGrupo = new Map<string, TiendaStats[]>();
+  for (const g of gruposVisibles) {
+    tiendaPorGrupo.set(g.id, stats.filter(s => s.tienda.grupoId === g.id));
+  }
+
+  // Tiendas sin grupo (solo visibles para SuperAdmin)
+  const sinGrupo = user?.rol === 'SUPERADMIN'
+    ? stats.filter(s => !s.tienda.grupoId)
+    : [];
+
+  // Conteo total de tiendas con grupo para calcular índices de animación
+  let animIndex = 0;
 
   return (
     <div className="max-w-7xl mx-auto page-enter">
-      {/* Page header */}
+      {/* ── Page header ── */}
       <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -249,24 +324,44 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Global summary */}
+      {/* ── Global summary ── */}
       {stats.length > 0 && <GlobalSummary stats={stats} />}
 
-      {/* Tiendas grid */}
-      {stats.length === 0 ? (
+      {/* ── Estado vacío ── */}
+      {stats.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 text-zinc-600 anim-fade-in">
           <Boxes size={48} className="mb-4 opacity-30 float" />
           <p className="text-sm font-medium">No tienes tiendas asignadas</p>
           <p className="text-xs mt-1">Contacta al administrador para que te asigne una tienda.</p>
         </div>
-      ) : (
-        <div>
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">
-            Tiendas
+      )}
+
+      {/* ── Grupos con tiendas ── */}
+      {gruposVisibles.map(g => {
+        const tiendas = tiendaPorGrupo.get(g.id) ?? [];
+        if (tiendas.length === 0) return null;
+        const idx = animIndex;
+        animIndex += tiendas.length;
+        return (
+          <GrupoSection
+            key={g.id}
+            grupo={g}
+            stats={tiendas}
+            startIndex={idx}
+          />
+        );
+      })}
+
+      {/* ── Tiendas sin grupo (solo SuperAdmin) ── */}
+      {sinGrupo.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <Boxes size={13} />
+            Sin grupo asignado
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {stats.map((s, i) => (
-              <TiendaCard key={s.tienda.id} stats={s} index={i} />
+            {sinGrupo.map((s, i) => (
+              <TiendaCard key={s.tienda.id} stats={s} index={animIndex + i} />
             ))}
           </div>
         </div>

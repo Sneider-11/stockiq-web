@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   X, LayoutDashboard, Users, Store, User,
-  LogOut, Layers, BarChart3, ChevronRight,
+  LogOut, Layers, BarChart3, ChevronRight, Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SessionUser } from '@/types';
@@ -15,11 +15,12 @@ interface Props {
 }
 
 const NAV = [
-  { href: '/',            label: 'Inicio',      Icon: LayoutDashboard, roles: null },
-  { href: '/consolidado', label: 'Consolidado', Icon: BarChart3,        roles: ['SUPERADMIN', 'ADMIN'] },
-  { href: '/equipo',      label: 'Equipo',      Icon: Users,           roles: ['SUPERADMIN', 'ADMIN'] },
-  { href: '/tiendas',     label: 'Tiendas',     Icon: Store,           roles: ['SUPERADMIN'] },
-  { href: '/perfil',      label: 'Mi Perfil',   Icon: User,            roles: null },
+  { href: '/',            label: 'Inicio',             Icon: LayoutDashboard, roles: null },
+  { href: '/consolidado', label: 'Consolidado',        Icon: BarChart3,       roles: ['SUPERADMIN', 'ADMIN'] },
+  { href: '/grupos',      label: 'Grupos Comerciales', Icon: Building2,       roles: ['SUPERADMIN'] },
+  { href: '/equipo',      label: 'Equipo',             Icon: Users,           roles: ['SUPERADMIN', 'ADMIN'] },
+  { href: '/tiendas',     label: 'Tiendas',            Icon: Store,           roles: ['SUPERADMIN'] },
+  { href: '/perfil',      label: 'Mi Perfil',          Icon: User,            roles: null },
 ] as const;
 
 export function MobileMenu({ user, onClose }: Props) {
