@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import type { Usuario, Tienda, SessionUser, Rol, GrupoComercial } from '@/types';
+import { useToast } from '@/context/ToastContext';
 
 interface Props {
   initialUsuarios: Usuario[];
@@ -59,6 +60,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
   const [error,          setError]          = useState('');
   const [search,         setSearch]         = useState('');
 
+  const toast = useToast();
   const isSuperAdmin = sessionUser.rol === 'SUPERADMIN';
 
   const filtered = usuarios.filter(u =>
@@ -148,6 +150,7 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
         };
         setUsuarios(prev => [...prev, nuevoUsuario]);
       }
+      toast.success(form.id ? 'Usuario actualizado.' : 'Usuario creado exitosamente.');
       closeModal();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error inesperado.');
@@ -166,6 +169,9 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
     });
     if (res.ok) {
       setUsuarios(prev => prev.map(x => x.id === u.id ? { ...x, activo: !u.activo } : x));
+      toast.success(u.activo !== false ? 'Usuario desactivado.' : 'Usuario activado.');
+    } else {
+      toast.error('No se pudo actualizar el estado.');
     }
   };
 
@@ -176,6 +182,9 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
     const res = await fetch(`/api/usuarios/${u.id}`, { method: 'DELETE' });
     if (res.ok) {
       setUsuarios(prev => prev.filter(x => x.id !== u.id));
+      toast.success('Usuario eliminado.');
+    } else {
+      toast.error('No se pudo eliminar el usuario.');
     }
     setDeleting(null);
     setConfirmDelete(null);

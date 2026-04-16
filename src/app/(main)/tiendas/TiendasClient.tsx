@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import type { Tienda } from '@/types';
+import { useToast } from '@/context/ToastContext';
 
 const PRESET_COLORS = [
   '#6366F1', '#8B5CF6', '#A855F7', '#EC4899',
@@ -42,6 +43,7 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
   const [confirmDelete,  setConfirmDelete]  = useState<string | null>(null);
   const [confirmToggle,  setConfirmToggle]  = useState<string | null>(null);
 
+  const toast = useToast();
   const openCreate = () => { setForm(EMPTY); setError(''); setModal(true); };
   const openEdit   = (t: Tienda) => {
     setForm({ id: t.id, nombre: t.nombre, nit: t.nit ?? '', color: t.color });
@@ -82,6 +84,7 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
         };
         setTiendas(prev => [...prev, nueva]);
       }
+      toast.success(form.id ? 'Tienda actualizada.' : 'Tienda creada exitosamente.');
       closeModal();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error inesperado.');
@@ -111,6 +114,9 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
     });
     if (res.ok) {
       setTiendas(prev => prev.map(x => x.id === t.id ? { ...x, modoInventario: nuevoModo } : x));
+      toast.success(nuevoModo === 'OFFLINE' ? 'Inventario cerrado.' : 'Inventario activado.');
+    } else {
+      toast.error('No se pudo cambiar el modo.');
     }
     setToggling(null);
   };
@@ -125,7 +131,12 @@ export default function TiendasClient({ initialTiendas, isSuperAdmin }: Props) {
     setConfirmDelete(null);
     setDeleting(t.id);
     const res = await fetch(`/api/tiendas/${t.id}`, { method: 'DELETE' });
-    if (res.ok) setTiendas(prev => prev.filter(x => x.id !== t.id));
+    if (res.ok) {
+      setTiendas(prev => prev.filter(x => x.id !== t.id));
+      toast.success('Tienda eliminada.');
+    } else {
+      toast.error('No se pudo eliminar la tienda.');
+    }
     setDeleting(null);
   };
 

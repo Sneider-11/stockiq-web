@@ -4,11 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   Building2, Plus, Pencil, Trash2, X, Save, Loader2,
-  AlertCircle, ChevronRight, Package, Store,
+  AlertCircle, ChevronRight, Package, Store, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Modal } from '@/components/ui/Modal';
 import type { GrupoComercial, Tienda } from '@/types';
+import { useToast } from '@/context/ToastContext';
 
 const PRESET_COLORS = [
   '#6366F1', '#8B5CF6', '#A855F7', '#EC4899',
@@ -31,12 +32,14 @@ interface Props {
 }
 
 export default function GruposClient({ initialGrupos, tiendas }: Props) {
-  const [grupos,   setGrupos]   = useState<GrupoComercial[]>(initialGrupos);
-  const [modal,    setModal]    = useState(false);
-  const [form,     setForm]     = useState<FormState>(EMPTY);
-  const [saving,   setSaving]   = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [error,    setError]    = useState('');
+  const toast = useToast();
+  const [grupos,         setGrupos]         = useState<GrupoComercial[]>(initialGrupos);
+  const [modal,          setModal]          = useState(false);
+  const [form,           setForm]           = useState<FormState>(EMPTY);
+  const [saving,         setSaving]         = useState(false);
+  const [deleting,       setDeleting]       = useState<string | null>(null);
+  const [confirmDelete,  setConfirmDelete]  = useState<string | null>(null);
+  const [error,          setError]          = useState('');
 
   const openCreate = () => { setForm(EMPTY); setError(''); setModal(true); };
   const openEdit   = (g: GrupoComercial) => {
@@ -76,6 +79,7 @@ export default function GruposClient({ initialGrupos, tiendas }: Props) {
         };
         setGrupos(prev => [...prev, nuevo]);
       }
+      toast.success(form.id ? 'Grupo actualizado.' : 'Grupo creado exitosamente.');
       closeModal();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error inesperado.');
@@ -85,16 +89,16 @@ export default function GruposClient({ initialGrupos, tiendas }: Props) {
   };
 
   const handleDelete = async (g: GrupoComercial) => {
-    const tiendasDelGrupo = tiendas.filter(t => t.grupoId === g.id);
-    if (tiendasDelGrupo.length > 0) {
-      if (!confirm(`"${g.nombre}" tiene ${tiendasDelGrupo.length} tienda(s) asignada(s). Al eliminar el grupo, esas tiendas quedarán sin grupo. ¿Continuar?`)) return;
-    } else {
-      if (!confirm(`¿Eliminar el grupo "${g.nombre}"?`)) return;
-    }
     setDeleting(g.id);
     const res = await fetch(`/api/grupos/${g.id}`, { method: 'DELETE' });
-    if (res.ok) setGrupos(prev => prev.filter(x => x.id !== g.id));
+    if (res.ok) {
+      setGrupos(prev => prev.filter(x => x.id !== g.id));
+      toast.success('Grupo eliminado.');
+    } else {
+      toast.error('No se pudo eliminar el grupo.');
+    }
     setDeleting(null);
+    setConfirmDelete(null);
   };
 
   return (
@@ -186,10 +190,10 @@ export default function GruposClient({ initialGrupos, tiendas }: Props) {
                         <Pencil size={14} />
                       </button>
                       <button
-                        onClick={() => handleDelete(g)}
+                        onClick={() => setConfirmDelete(prev => prev === g.id ? null : g.id)}
                         disabled={deleting === g.id}
+                        aria-label="Eliminar grupo"
                         className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all disabled:opacity-50"
-                        title="Eliminar grupo"
                       >
                         {deleting === g.id
                           ? <Loader2 size={14} className="animate-spin" />
@@ -204,6 +208,37 @@ export default function GruposClient({ initialGrupos, tiendas }: Props) {
                       </Link>
                     </div>
                   </div>
+
+                  {/* Inline confirm */}
+                  {confirmDelete === g.id && (
+                    <div className="mt-3 mx-4 mb-3 flex items-center gap-2 bg-red-950/40 border border-red-900/50 rounded-xl px-3 py-2.5 anim-fade-up">
+                      <AlertCircle size={13} className="text-red-400 shrink-0" />
+                      <p className="text-xs text-red-300 flex-1">
+                        ¿Eliminar <strong>{g.nombre}</strong>?
+                        {tiendas.filter(t => t.grupoId === g.id).length > 0 && (
+                          <span className="text-red-400"> Las {tiendas.filter(t => t.grupoId === g.id).length} tienda(s) quedarán sin grupo.</span>
+                        )}
+                      </p>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button
+                          onClick={() => setConfirmDelete(null)}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 transition-all"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(g)}
+                          disabled={deleting === g.id}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-semibold hover:bg-red-500/30 transition-all disabled:opacity-50"
+                        >
+                          {deleting === g.id
+                            ? <Loader2 size={11} className="animate-spin" />
+                            : <Check size={11} />}
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );

@@ -5,6 +5,7 @@ import { Trash2, Loader2, CheckCircle, Package, Check, AlertCircle } from 'lucid
 import { Badge } from '@/components/ui/Badge';
 import { formatDate, formatCOP } from '@/lib/utils';
 import type { SobranteSinStock } from '@/types';
+import { useToast } from '@/context/ToastContext';
 
 interface Props {
   initialSobrantes: SobranteSinStock[];
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function SobrantesClient({ initialSobrantes, tiendaId, canManage }: Props) {
+  const toast = useToast();
   const [sobrantes,       setSobrantes]       = useState<SobranteSinStock[]>(initialSobrantes);
   const [confirming,      setConfirming]      = useState<string | null>(null);
   const [deleting,        setDeleting]        = useState<string | null>(null);
@@ -24,6 +26,9 @@ export default function SobrantesClient({ initialSobrantes, tiendaId, canManage 
     const res = await fetch(`/api/tienda/${tiendaId}/sobrantes/${s.id}`, { method: 'PATCH' });
     if (res.ok) {
       setSobrantes(prev => prev.map(x => x.id === s.id ? { ...x, estado: 'CONFIRMADO' } : x));
+      toast.success('Sobrante confirmado.');
+    } else {
+      toast.error('No se pudo confirmar el sobrante.');
     }
     setConfirming(null);
   };
@@ -32,7 +37,12 @@ export default function SobrantesClient({ initialSobrantes, tiendaId, canManage 
     if (!canManage) return;
     setDeleting(s.id);
     const res = await fetch(`/api/tienda/${tiendaId}/sobrantes/${s.id}`, { method: 'DELETE' });
-    if (res.ok) setSobrantes(prev => prev.filter(x => x.id !== s.id));
+    if (res.ok) {
+      setSobrantes(prev => prev.filter(x => x.id !== s.id));
+      toast.success('Sobrante eliminado.');
+    } else {
+      toast.error('No se pudo eliminar el sobrante.');
+    }
     setDeleting(null);
     setConfirmDelete(null);
   };

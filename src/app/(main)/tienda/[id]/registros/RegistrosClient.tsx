@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { formatDate } from '@/lib/utils';
 import type { Registro } from '@/types';
+import { useToast } from '@/context/ToastContext';
 
 const CLSF_BADGE: Record<Registro['clasificacion'], React.ReactNode> = {
   SIN_DIF:  <Badge variant="purple">Sin dif.</Badge>,
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export default function RegistrosClient({ initialRegistros, tiendaId, canDelete, canClear }: Props) {
+  const toast = useToast();
   const [registros,      setRegistros]      = useState<Registro[]>(initialRegistros);
   const [deleting,       setDeleting]       = useState<string | null>(null);
   const [confirmDelete,  setConfirmDelete]  = useState<string | null>(null);
@@ -51,7 +53,12 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
     if (!canDelete) return;
     setDeleting(r.id);
     const res = await fetch(`/api/tienda/${tiendaId}/registros/${r.id}`, { method: 'DELETE' });
-    if (res.ok) setRegistros(prev => prev.filter(x => x.id !== r.id));
+    if (res.ok) {
+      setRegistros(prev => prev.filter(x => x.id !== r.id));
+      toast.success('Registro eliminado.');
+    } else {
+      toast.error('No se pudo eliminar el registro.');
+    }
     setDeleting(null);
     setConfirmDelete(null);
   };
@@ -60,7 +67,12 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
     if (!canClear) return;
     setClearing(true);
     const res = await fetch(`/api/tienda/${tiendaId}/registros`, { method: 'DELETE' });
-    if (res.ok) setRegistros([]);
+    if (res.ok) {
+      setRegistros([]);
+      toast.success('Todos los registros eliminados.');
+    } else {
+      toast.error('No se pudo limpiar los registros.');
+    }
     setClearing(false);
     setConfirmClear(false);
   };
