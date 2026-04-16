@@ -52,7 +52,7 @@ export default function LoginPage() {
         setError(data.error ?? 'Error al iniciar sesión.');
         return;
       }
-      router.push('/');
+      router.replace('/');
       router.refresh();
     });
   };
@@ -79,7 +79,7 @@ export default function LoginPage() {
         setError(data.error ?? 'Error al guardar la contraseña.');
         return;
       }
-      router.push('/');
+      router.replace('/');
       router.refresh();
     });
   };
