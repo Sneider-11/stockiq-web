@@ -35,6 +35,14 @@ function ProgresoBar({ value }: { value: number }) {
   );
 }
 
+// ── Nivel de riesgo (misma lógica que app móvil y ReporteClient) ──────────────
+function nivelRiesgo(progreso: number, faltantes: number, totalCatalogo: number) {
+  const faltPct = totalCatalogo > 0 ? (faltantes / totalCatalogo) * 100 : 0;
+  if (progreso >= 95 && faltPct <= 5) return 'BAJO' as const;
+  if (progreso >= 80 && faltPct <= 15) return 'MEDIO' as const;
+  return 'ALTO' as const;
+}
+
 function TiendaCard({ stats, index }: { stats: TiendaStats; index: number }) {
   const { tienda, progreso, totalRegistros, totalCatalogo,
           valorFaltante, valorSobrante, faltantes, sobrantes, sinDiferencia, ceros } = stats;
@@ -43,6 +51,16 @@ function TiendaCard({ stats, index }: { stats: TiendaStats; index: number }) {
   const progresoColor =
     progreso >= 80 ? 'text-emerald-400' :
     progreso >= 40 ? 'text-amber-400' : 'text-red-400';
+
+  // Solo mostrar nivel si hay datos
+  const nivel = totalRegistros > 0 ? nivelRiesgo(progreso, faltantes, totalCatalogo) : null;
+  const nivelBadge = nivel === 'BAJO'
+    ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">↑ Bajo</span>
+    : nivel === 'MEDIO'
+    ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-950/60 text-amber-400 border border-amber-800/50">~ Medio</span>
+    : nivel === 'ALTO'
+    ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-950/60 text-red-400 border border-red-800/50">! Alto</span>
+    : null;
 
   return (
     <Link
@@ -70,9 +88,12 @@ function TiendaCard({ stats, index }: { stats: TiendaStats; index: number }) {
               <h3 className="text-sm font-bold text-zinc-100 group-hover:text-white transition-colors leading-tight">
                 {tienda.nombre}
               </h3>
-              {tienda.nit
-                ? <p className="text-[11px] text-zinc-500 flex items-center gap-1 mt-0.5"><Hash size={10}/>{tienda.nit}</p>
-                : <p className="text-[11px] text-zinc-500 mt-0.5">{totalCatalogo} artículos</p>}
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                {tienda.nit
+                  ? <p className="text-[11px] text-zinc-500 flex items-center gap-1"><Hash size={10}/>{tienda.nit}</p>
+                  : <p className="text-[11px] text-zinc-500">{totalCatalogo} artículos</p>}
+                {nivelBadge}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">

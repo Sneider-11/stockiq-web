@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2, Loader2, CheckCircle, Package } from 'lucide-react';
+import { Trash2, Loader2, CheckCircle, Package, Check, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { formatDate, formatCOP } from '@/lib/utils';
 import type { SobranteSinStock } from '@/types';
@@ -13,9 +13,10 @@ interface Props {
 }
 
 export default function SobrantesClient({ initialSobrantes, tiendaId, canManage }: Props) {
-  const [sobrantes, setSobrantes] = useState<SobranteSinStock[]>(initialSobrantes);
-  const [confirming, setConfirming] = useState<string | null>(null);
-  const [deleting,   setDeleting]   = useState<string | null>(null);
+  const [sobrantes,       setSobrantes]       = useState<SobranteSinStock[]>(initialSobrantes);
+  const [confirming,      setConfirming]      = useState<string | null>(null);
+  const [deleting,        setDeleting]        = useState<string | null>(null);
+  const [confirmDelete,   setConfirmDelete]   = useState<string | null>(null);
 
   const handleConfirmar = async (s: SobranteSinStock) => {
     if (!canManage || s.estado === 'CONFIRMADO') return;
@@ -29,11 +30,11 @@ export default function SobrantesClient({ initialSobrantes, tiendaId, canManage 
 
   const handleDelete = async (s: SobranteSinStock) => {
     if (!canManage) return;
-    if (!confirm(`¿Eliminar el sobrante "${s.descripcion}"?`)) return;
     setDeleting(s.id);
     const res = await fetch(`/api/tienda/${tiendaId}/sobrantes/${s.id}`, { method: 'DELETE' });
     if (res.ok) setSobrantes(prev => prev.filter(x => x.id !== s.id));
     setDeleting(null);
+    setConfirmDelete(null);
   };
 
   const pendientes   = sobrantes.filter(s => s.estado === 'PENDIENTE').length;
@@ -109,16 +110,36 @@ export default function SobrantesClient({ initialSobrantes, tiendaId, canManage 
                             </button>
                           )}
                           {/* Eliminar */}
-                          <button
-                            onClick={() => handleDelete(s)}
-                            disabled={deleting === s.id}
-                            title="Eliminar"
-                            className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                          >
-                            {deleting === s.id
-                              ? <Loader2 size={14} className="animate-spin" />
-                              : <Trash2 size={14} />}
-                          </button>
+                          {confirmDelete === s.id ? (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => setConfirmDelete(null)}
+                                className="px-2 py-1 rounded-lg text-[10px] font-semibold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 transition-all"
+                              >
+                                No
+                              </button>
+                              <button
+                                onClick={() => handleDelete(s)}
+                                disabled={deleting === s.id}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-[10px] font-semibold hover:bg-red-500/30 transition-all disabled:opacity-50"
+                              >
+                                {deleting === s.id
+                                  ? <Loader2 size={10} className="animate-spin" />
+                                  : <Check size={10} aria-hidden="true" />}
+                                Sí
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDelete(s.id)}
+                              disabled={deleting === s.id}
+                              title="Eliminar sobrante"
+                              aria-label={`Eliminar sobrante ${s.descripcion}`}
+                              className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     )}

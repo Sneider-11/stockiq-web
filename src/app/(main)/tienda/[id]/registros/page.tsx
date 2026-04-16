@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { dbGetTiendas, dbGetRegistros } from '@/lib/db';
 import { getSession } from '@/lib/auth';
-import { ArrowLeft, Package } from 'lucide-react';
+import { ArrowLeft, Package, ChevronRight, Home } from 'lucide-react';
 import RegistrosClient from './RegistrosClient';
 
 interface Props { params: Promise<{ id: string }> }
@@ -25,8 +25,20 @@ export default async function RegistrosPage({ params }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto page-enter">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-[11px] text-zinc-600 mb-4" aria-label="Breadcrumb">
+        <Link href="/" className="flex items-center gap-1 hover:text-zinc-400 transition-colors">
+          <Home size={11} />
+          Inicio
+        </Link>
+        <ChevronRight size={10} />
+        <Link href={`/tienda/${id}`} className="hover:text-zinc-400 transition-colors truncate max-w-[120px]">{tienda.nombre}</Link>
+        <ChevronRight size={10} />
+        <span className="text-zinc-400 font-medium">Registros</span>
+      </nav>
+
       <div className="flex items-center gap-3 mb-6">
-        <Link href={`/tienda/${id}`} className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 hover:scale-105 transition-all">
+        <Link href={`/tienda/${id}`} className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 hover:scale-105 transition-all" aria-label="Volver a la tienda">
           <ArrowLeft size={18} />
         </Link>
         <div className="flex items-center gap-3">

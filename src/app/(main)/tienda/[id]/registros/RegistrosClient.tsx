@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2, Loader2, Search, AlertTriangle, Package, X, Filter } from 'lucide-react';
+import { Trash2, Loader2, Search, AlertTriangle, Package, X, Filter, Check, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { formatDate } from '@/lib/utils';
@@ -30,11 +30,13 @@ interface Props {
 }
 
 export default function RegistrosClient({ initialRegistros, tiendaId, canDelete, canClear }: Props) {
-  const [registros, setRegistros] = useState<Registro[]>(initialRegistros);
-  const [deleting,  setDeleting]  = useState<string | null>(null);
-  const [clearing,  setClearing]  = useState(false);
-  const [search,    setSearch]    = useState('');
-  const [filtroClsf, setFiltroClsf] = useState('');
+  const [registros,      setRegistros]      = useState<Registro[]>(initialRegistros);
+  const [deleting,       setDeleting]       = useState<string | null>(null);
+  const [confirmDelete,  setConfirmDelete]  = useState<string | null>(null);
+  const [clearing,       setClearing]       = useState(false);
+  const [confirmClear,   setConfirmClear]   = useState(false);
+  const [search,         setSearch]         = useState('');
+  const [filtroClsf,     setFiltroClsf]     = useState('');
 
   const filtered = registros.filter(r => {
     const matchSearch =
@@ -47,20 +49,20 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
 
   const handleDelete = async (r: Registro) => {
     if (!canDelete) return;
-    if (!confirm(`¿Eliminar el registro de "${r.descripcion}"?`)) return;
     setDeleting(r.id);
     const res = await fetch(`/api/tienda/${tiendaId}/registros/${r.id}`, { method: 'DELETE' });
     if (res.ok) setRegistros(prev => prev.filter(x => x.id !== r.id));
     setDeleting(null);
+    setConfirmDelete(null);
   };
 
   const handleClearAll = async () => {
     if (!canClear) return;
-    if (!confirm('¿Eliminar TODOS los registros de esta tienda? Esta acción no se puede deshacer.')) return;
     setClearing(true);
     const res = await fetch(`/api/tienda/${tiendaId}/registros`, { method: 'DELETE' });
     if (res.ok) setRegistros([]);
     setClearing(false);
+    setConfirmClear(false);
   };
 
   return (
@@ -107,15 +109,46 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
         {/* Limpiar todo */}
         {canClear && registros.length > 0 && (
           <button
-            onClick={handleClearAll}
+            onClick={() => setConfirmClear(prev => !prev)}
             disabled={clearing}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-950/40 border border-red-900/50 text-red-400 text-xs font-semibold hover:bg-red-950/60 transition-all disabled:opacity-50 shrink-0"
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all disabled:opacity-50 shrink-0',
+              confirmClear
+                ? 'bg-red-950/60 border border-red-800/60 text-red-300'
+                : 'bg-red-950/40 border border-red-900/50 text-red-400 hover:bg-red-950/60',
+            )}
           >
             {clearing ? <Loader2 size={13} className="animate-spin" /> : <AlertTriangle size={13} />}
             Limpiar todo
           </button>
         )}
       </div>
+
+      {/* ── Confirm limpiar todo ── */}
+      {confirmClear && (
+        <div className="flex items-center gap-2 mb-4 bg-red-950/40 border border-red-900/50 rounded-xl px-4 py-3 anim-fade-up">
+          <AlertCircle size={14} className="text-red-400 shrink-0" aria-hidden="true" />
+          <p className="text-xs text-red-300 flex-1">¿Eliminar <strong>todos los {registros.length} registros</strong> de esta tienda? Esta acción no se puede deshacer.</p>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => setConfirmClear(false)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleClearAll}
+              disabled={clearing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-semibold hover:bg-red-500/30 transition-all disabled:opacity-50"
+            >
+              {clearing
+                ? <Loader2 size={11} className="animate-spin" />
+                : <Check size={11} aria-hidden="true" />}
+              Confirmar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Contador ── */}
       <p className="text-xs text-zinc-500 mb-3">
@@ -160,15 +193,35 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
                     <td className="px-4 py-3 text-zinc-500 text-xs hidden lg:table-cell">{formatDate(r.escaneadoEn)}</td>
                     {canDelete && (
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleDelete(r)}
-                          disabled={deleting === r.id}
-                          className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                        >
-                          {deleting === r.id
-                            ? <Loader2 size={13} className="animate-spin" />
-                            : <Trash2 size={13} />}
-                        </button>
+                        {confirmDelete === r.id ? (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => setConfirmDelete(null)}
+                              className="px-2 py-1 rounded-lg text-[10px] font-semibold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 transition-all"
+                            >
+                              No
+                            </button>
+                            <button
+                              onClick={() => handleDelete(r)}
+                              disabled={deleting === r.id}
+                              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-[10px] font-semibold hover:bg-red-500/30 transition-all disabled:opacity-50"
+                            >
+                              {deleting === r.id
+                                ? <Loader2 size={10} className="animate-spin" />
+                                : <Check size={10} aria-hidden="true" />}
+                              Sí
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDelete(r.id)}
+                            disabled={deleting === r.id}
+                            aria-label={`Eliminar registro de ${r.descripcion}`}
+                            className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </td>
                     )}
                   </tr>

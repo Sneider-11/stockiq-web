@@ -4,7 +4,8 @@ import { useState } from 'react';
 import {
   Users, Plus, Pencil, Trash2, X, Save, Loader2,
   Shield, Store, ToggleLeft, ToggleRight, AlertCircle,
-  ChevronDown, UserCheck, UserX, Building2,
+  ChevronDown, UserCheck, UserX, Building2, MessageCircle,
+  Check, Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
@@ -49,13 +50,14 @@ const ROL_LABEL: Record<Rol, string> = {
 };
 
 export default function EquipoClient({ initialUsuarios, tiendas, grupos, sessionUser }: Props) {
-  const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
-  const [modal,    setModal]    = useState(false);
-  const [form,     setForm]     = useState<FormState>(EMPTY);
-  const [saving,   setSaving]   = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [error,    setError]    = useState('');
-  const [search,   setSearch]   = useState('');
+  const [usuarios,       setUsuarios]       = useState<Usuario[]>(initialUsuarios);
+  const [modal,          setModal]          = useState(false);
+  const [form,           setForm]           = useState<FormState>(EMPTY);
+  const [saving,         setSaving]         = useState(false);
+  const [deleting,       setDeleting]       = useState<string | null>(null);
+  const [confirmDelete,  setConfirmDelete]  = useState<string | null>(null);
+  const [error,          setError]          = useState('');
+  const [search,         setSearch]         = useState('');
 
   const isSuperAdmin = sessionUser.rol === 'SUPERADMIN';
 
@@ -170,13 +172,43 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
   // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDelete = async (u: Usuario) => {
     if (!isSuperAdmin || u.id === sessionUser.id) return;
-    if (!confirm(`¿Eliminar a ${u.nombre}? Esta acción no se puede deshacer.`)) return;
     setDeleting(u.id);
     const res = await fetch(`/api/usuarios/${u.id}`, { method: 'DELETE' });
     if (res.ok) {
       setUsuarios(prev => prev.filter(x => x.id !== u.id));
     }
     setDeleting(null);
+    setConfirmDelete(null);
+  };
+
+  // ── WhatsApp credenciales ─────────────────────────────────────────────────────
+  const handleWhatsApp = (u: Usuario) => {
+    if (!u.telefono) return;
+    const tiendasTexto = u.tiendas
+      .map(tid => {
+        const t = tiendas.find(x => x.id === tid);
+        const rol = (u.tiendasRoles as Record<string, string>)?.[tid] ?? u.rol;
+        return t ? `  • ${t.nombre} (${rol === 'ADMIN' ? 'Admin de Tienda' : 'Contador'})` : null;
+      })
+      .filter(Boolean)
+      .join('\n');
+
+    const cargo = u.rol === 'SUPERADMIN' ? 'Super Administrador'
+                : u.rol === 'ADMIN'      ? 'Admin de Tienda'
+                : 'Contador';
+
+    const msg = encodeURIComponent(
+      `Hola ${u.nombre.split(' ')[0]} 👋\n\n` +
+      `Te compartimos tus credenciales de acceso a *StockIQ*:\n\n` +
+      `👤 *Usuario:* ${u.cedula}\n` +
+      `🔑 *Contraseña:* La que ya tienes registrada\n` +
+      `🏷️ *Cargo:* ${cargo}\n\n` +
+      (tiendasTexto ? `🏪 *Tiendas asignadas:*\n${tiendasTexto}\n\n` : '') +
+      `📱 Descarga la app StockIQ en tu dispositivo e ingresa con tu cédula.\n\n` +
+      `_Grupo Orvion Tech · 2026_`,
+    );
+
+    window.open(`https://wa.me/57${u.telefono}?text=${msg}`, '_blank');
   };
 
   return (
@@ -205,13 +237,21 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
 
       {/* ── Search ── */}
       <div className="mb-5">
-        <input
-          type="text"
-          placeholder="Buscar por nombre o cédula..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
-        />
+        <div className="relative max-w-sm">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre o cédula..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Users list ── */}
@@ -292,10 +332,22 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
 
               {/* Actions */}
               {isSuperAdmin && (
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {/* WhatsApp — solo si tiene teléfono */}
+                  {u.telefono && (
+                    <button
+                      onClick={() => handleWhatsApp(u)}
+                      title="Enviar credenciales por WhatsApp"
+                      aria-label="Enviar credenciales por WhatsApp"
+                      className="p-2 rounded-lg text-zinc-500 hover:text-emerald-400 hover:bg-emerald-950/30 transition-all"
+                    >
+                      <MessageCircle size={15} />
+                    </button>
+                  )}
                   <button
                     onClick={() => handleToggleActive(u)}
-                    title={u.activo !== false ? 'Desactivar' : 'Activar'}
+                    title={u.activo !== false ? 'Desactivar usuario' : 'Activar usuario'}
+                    aria-label={u.activo !== false ? 'Desactivar usuario' : 'Activar usuario'}
                     className="p-2 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
                   >
                     {u.activo !== false
@@ -304,14 +356,16 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
                   </button>
                   <button
                     onClick={() => openEdit(u)}
+                    aria-label="Editar usuario"
                     className="p-2 rounded-lg text-zinc-500 hover:text-vlt hover:bg-prp/10 transition-all"
                   >
                     <Pencil size={15} />
                   </button>
                   {u.id !== sessionUser.id && (
                     <button
-                      onClick={() => handleDelete(u)}
+                      onClick={() => setConfirmDelete(prev => prev === u.id ? null : u.id)}
                       disabled={deleting === u.id}
+                      aria-label="Eliminar usuario"
                       className="p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/30 transition-all disabled:opacity-50"
                     >
                       {deleting === u.id
@@ -322,6 +376,32 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
                 </div>
               )}
             </div>
+
+            {/* Inline confirm de eliminación */}
+            {confirmDelete === u.id && (
+              <div className="mt-3 flex items-center gap-2 bg-red-950/40 border border-red-900/50 rounded-xl px-3 py-2.5 anim-fade-up">
+                <AlertCircle size={13} className="text-red-400 shrink-0" aria-hidden="true" />
+                <p className="text-xs text-red-300 flex-1">¿Eliminar a <strong>{u.nombre}</strong>? Esta acción no se puede deshacer.</p>
+                <div className="flex gap-1.5 shrink-0">
+                  <button
+                    onClick={() => setConfirmDelete(null)}
+                    className="px-2.5 py-1 rounded-lg text-xs font-semibold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => handleDelete(u)}
+                    disabled={deleting === u.id}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-semibold hover:bg-red-500/30 transition-all disabled:opacity-50"
+                  >
+                    {deleting === u.id
+                      ? <Loader2 size={11} className="animate-spin" />
+                      : <Check size={11} aria-hidden="true" />}
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
 

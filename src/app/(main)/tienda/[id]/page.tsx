@@ -9,7 +9,7 @@ import { DescargarTiendaBtn } from '@/components/ui/DescargarTiendaBtn';
 import {
   ArrowLeft, Boxes, TrendingDown, TrendingUp,
   CheckCircle2, BarChart2, Upload, ClipboardList,
-  AlertTriangle, ScanLine, Hash, ChevronRight,
+  AlertTriangle, ScanLine, Hash, ChevronRight, FileText, Home,
 } from 'lucide-react';
 import type { Registro } from '@/types';
 
@@ -90,10 +90,28 @@ export default async function TiendaPage({ params }: Props) {
       iconBg:  '#D97706',          // amber-600
       iconGlow:'rgba(217,119,6,0.35)',
     },
+    {
+      href:    `/tienda/${id}/reporte`,
+      label:   'Reporte',
+      icon:    <FileText size={18} />,
+      desc:    'Auditoría · análisis económico · equipo',
+      iconBg:  '#7C3AED',          // violet-700 (color StockIQ)
+      iconGlow:'rgba(124,58,237,0.35)',
+    },
   ];
 
   return (
     <div className="max-w-6xl mx-auto page-enter">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-[11px] text-zinc-600 mb-4" aria-label="Breadcrumb">
+        <Link href="/" className="flex items-center gap-1 hover:text-zinc-400 transition-colors">
+          <Home size={11} />
+          Inicio
+        </Link>
+        <ChevronRight size={10} />
+        <span className="text-zinc-400 font-medium truncate max-w-[160px]">{tienda.nombre}</span>
+      </nav>
+
       {/* ── Back + header ── */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <Link
