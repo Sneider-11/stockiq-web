@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbGetUsuarioByCedula } from '@/lib/db';
-import { hashPassword, buildSessionCookie } from '@/lib/auth';
+import { dbGetUsuarioByCedula, dbSetPassWeb } from '@/lib/db';
+import { verifyPassword, hashPassword, buildSessionCookie } from '@/lib/auth';
 import type { SessionUser } from '@/types';
 
 export async function POST(req: NextRequest) {
@@ -29,10 +29,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verificar contraseña
-    const hashed = hashPassword(password);
-    if (hashed !== usuario.passWeb) {
+    // Verificar contraseña (soporta bcrypt y SHA-256 legacy)
+    const { valid, needsRehash } = await verifyPassword(password, usuario.passWeb);
+    if (!valid) {
       return NextResponse.json({ error: 'Contraseña incorrecta.' }, { status: 401 });
+    }
+
+    // Migración automática: si el hash es SHA-256 legacy, actualizarlo a bcrypt
+    if (needsRehash) {
+      const newHash = await hashPassword(password);
+      await dbSetPassWeb(usuario.id, newHash);
     }
 
     // Crear sesión

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await dbSetPassWeb(userId, hashPassword(newPassword));
+    await dbSetPassWeb(userId, await hashPassword(newPassword));
 
     const sessionUser: SessionUser = {
       id:           usuario.id,

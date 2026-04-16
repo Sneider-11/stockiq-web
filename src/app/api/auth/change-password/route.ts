@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, hashPassword } from '@/lib/auth';
+import { getSession, verifyPassword, hashPassword } from '@/lib/auth';
 import { dbGetUsuarioByCedula, dbSetPassWeb } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
@@ -26,12 +26,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Debes configurar tu contraseña desde el primer inicio de sesión.' }, { status: 400 });
     }
 
-    const hashedCurrent = hashPassword(currentPassword);
-    if (hashedCurrent !== usuario.passWeb) {
+    const { valid } = await verifyPassword(currentPassword, usuario.passWeb);
+    if (!valid) {
       return NextResponse.json({ error: 'La contraseña actual es incorrecta.' }, { status: 401 });
     }
 
-    await dbSetPassWeb(usuario.id, hashPassword(newPassword));
+    await dbSetPassWeb(usuario.id, await hashPassword(newPassword));
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[POST /api/auth/change-password]', err);
