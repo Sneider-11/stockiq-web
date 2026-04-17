@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, X, Minus, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
@@ -32,8 +33,26 @@ const FILTROS = [
 interface Props { rows: ResultRow[] }
 
 export default function ResultadosClient({ rows }: Props) {
-  const [search, setSearch] = useState('');
-  const [filtro, setFiltro] = useState('');
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+
+  const [search, setSearch] = useState(() => searchParams.get('q')   ?? '');
+  const [filtro, setFiltro] = useState(() => searchParams.get('clf') ?? '');
+
+  // Debounced URL sync — updates URL 400ms after last change
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncUrl = useCallback((q: string, clf: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const p = new URLSearchParams(searchParams.toString());
+      q   ? p.set('q',   q)   : p.delete('q');
+      clf ? p.set('clf', clf) : p.delete('clf');
+      router.replace(`?${p.toString()}`, { scroll: false });
+    }, 400);
+  }, [router, searchParams]);
+
+  const handleSearch = (v: string) => { setSearch(v); syncUrl(v, filtro);  };
+  const handleFiltro = (v: string) => { setFiltro(v); syncUrl(search, v); };
 
   const filtered = rows.filter(r => {
     const matchSearch =
@@ -53,11 +72,11 @@ export default function ResultadosClient({ rows }: Props) {
             type="text"
             placeholder="Buscar por artículo o código…"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => handleSearch(e.target.value)}
             className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+            <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
               <X size={14} />
             </button>
           )}
@@ -66,7 +85,7 @@ export default function ResultadosClient({ rows }: Props) {
           {FILTROS.map(f => (
             <button
               key={f.value}
-              onClick={() => setFiltro(f.value)}
+              onClick={() => handleFiltro(f.value)}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
                 filtro === f.value

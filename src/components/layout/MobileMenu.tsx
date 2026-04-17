@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import {
   X, LayoutDashboard, Users, Store, User,
   LogOut, Layers, BarChart3, ChevronRight, Building2,
@@ -25,6 +26,7 @@ const NAV = [
 
 export function MobileMenu({ user, onClose }: Props) {
   const pathname = usePathname();
+  useEscapeKey(onClose);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });

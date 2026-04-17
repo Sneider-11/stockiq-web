@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { Trash2, Loader2, CheckCircle, Package, Check, Plus, X } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { formatDate, formatCOP } from '@/lib/utils';
@@ -26,6 +27,9 @@ export default function SobrantesClient({ initialSobrantes, tiendaId, canManage 
   const [showForm, setShowForm] = useState(false);
   const [form,     setForm]     = useState(EMPTY_FORM);
   const [saving,   setSaving]   = useState(false);
+
+  const closeForm = useCallback(() => { setShowForm(false); setForm(EMPTY_FORM); }, []);
+  useEscapeKey(closeForm, showForm);
 
   const handleConfirmar = async (s: SobranteSinStock) => {
     if (!canManage || s.estado === 'CONFIRMADO') return;

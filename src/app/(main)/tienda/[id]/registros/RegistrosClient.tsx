@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { Trash2, Loader2, Search, AlertTriangle, Package, X, Filter, Check, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
@@ -32,14 +34,37 @@ interface Props {
 }
 
 export default function RegistrosClient({ initialRegistros, tiendaId, canDelete, canClear, total }: Props) {
-  const toast = useToast();
-  const [registros,      setRegistros]      = useState<Registro[]>(initialRegistros);
-  const [deleting,       setDeleting]       = useState<string | null>(null);
-  const [confirmDelete,  setConfirmDelete]  = useState<string | null>(null);
-  const [clearing,       setClearing]       = useState(false);
-  const [confirmClear,   setConfirmClear]   = useState(false);
-  const [search,         setSearch]         = useState('');
-  const [filtroClsf,     setFiltroClsf]     = useState('');
+  const toast        = useToast();
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+
+  const [registros,     setRegistros]     = useState<Registro[]>(initialRegistros);
+  const [deleting,      setDeleting]      = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [clearing,      setClearing]      = useState(false);
+  const [confirmClear,  setConfirmClear]  = useState(false);
+
+  // Initialize filters from URL params (persisted across reloads/shares)
+  const [search,     setSearch]     = useState(() => searchParams.get('q')   ?? '');
+  const [filtroClsf, setFiltroClsf] = useState(() => searchParams.get('clf') ?? '');
+
+  // Debounced URL sync — updates URL 400ms after last change
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncUrl = useCallback((q: string, clf: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const p = new URLSearchParams(searchParams.toString());
+      q   ? p.set('q',   q)   : p.delete('q');
+      clf ? p.set('clf', clf) : p.delete('clf');
+      router.replace(`?${p.toString()}`, { scroll: false });
+    }, 400);
+  }, [router, searchParams]);
+
+  const handleSearch = (v: string) => { setSearch(v);     syncUrl(v, filtroClsf); };
+  const handleFiltro = (v: string) => { setFiltroClsf(v); syncUrl(search, v);     };
+
+  const closeConfirmClear = useCallback(() => setConfirmClear(false), []);
+  useEscapeKey(closeConfirmClear, confirmClear);
 
   const filtered = registros.filter(r => {
     const matchSearch =
@@ -88,11 +113,11 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
             type="text"
             placeholder="Buscar por artículo, código o auditor…"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => handleSearch(e.target.value)}
             className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+            <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
               <X size={14} />
             </button>
           )}
@@ -105,7 +130,7 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
             {CLSF_OPTIONS.map(opt => (
               <button
                 key={opt.value}
-                onClick={() => setFiltroClsf(opt.value)}
+                onClick={() => handleFiltro(opt.value)}
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
                   filtroClsf === opt.value

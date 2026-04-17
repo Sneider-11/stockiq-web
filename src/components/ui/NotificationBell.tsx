@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { useRouter } from 'next/navigation';
 import {
   Bell, Store, Building2, Power, CheckCircle2,
@@ -70,6 +71,10 @@ export function NotificationBell({ cedula }: Props) {
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
+
+  // Cerrar con ESC
+  const closePanel = useCallback(() => setOpen(false), []);
+  useEscapeKey(closePanel, open);
 
   const handleNotifClick = async (notif: Notification) => {
     if (!notif.read) await markRead(notif.id);
