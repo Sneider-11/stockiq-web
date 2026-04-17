@@ -4,12 +4,13 @@ import type { Tienda, Usuario, Articulo, Registro, SobranteSinStock, TiendaStats
 // ─── GRUPOS COMERCIALES ───────────────────────────────────────────────────────
 
 export async function dbGetGrupos(): Promise<GrupoComercial[]> {
-  const { data, error } = await supabase
-    .from('grupos_comerciales')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('grupos_comerciales') as any)
     .select('*')
     .order('creado_en');
   if (error || !data) return [];
-  return data.map(r => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map(r => ({
     id:          r.id,
     nombre:      r.nombre,
     color:       r.color ?? '#6366F1',
@@ -61,12 +62,13 @@ export async function dbAsignarTiendaAGrupo(
 // ─── TIENDAS ──────────────────────────────────────────────────────────────────
 
 export async function dbGetTiendas(): Promise<Tienda[]> {
-  const { data, error } = await supabase
-    .from('tiendas')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('tiendas') as any)
     .select('*')
     .order('creado_en');
   if (error || !data) return [];
-  return data.map(r => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map(r => ({
     id:             r.id,
     nombre:         r.nombre,
     icono:          r.icono    ?? 'storefront',
@@ -101,12 +103,14 @@ export async function dbUpsertTienda(
 
 export async function dbDeleteTienda(id: string): Promise<void> {
   // Cascade delete: remove child records before the tienda itself
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await Promise.all([
-    supabase.from('registros').delete().eq('tienda_id', id),
-    supabase.from('sobrantes').delete().eq('tienda_id', id),
-    supabase.from('catalogos').delete().eq('tienda_id', id),
+    (supabase.from('registros') as any).delete().eq('tienda_id', id),
+    (supabase.from('sobrantes') as any).delete().eq('tienda_id', id),
+    (supabase.from('catalogos') as any).delete().eq('tienda_id', id),
   ]);
-  await supabase.from('tiendas').delete().eq('id', id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('tiendas') as any).delete().eq('id', id);
 }
 
 export async function dbSetModoInventario(
@@ -125,11 +129,12 @@ function migrateRol(rol: string): Usuario['rol'] {
 }
 
 export async function dbGetUsuarios(): Promise<Omit<Usuario, 'passWeb'>[]> {
-  const { data, error } = await supabase
-    .from('usuarios')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('usuarios') as any)
     .select('id,cedula,nombre,rol,tiendas,tiendas_roles,grupos,telefono,activo,creado_por');
   if (error || !data) return [];
-  return data.map(r => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map(r => ({
     id:           r.id,
     cedula:       r.cedula,
     nombre:       r.nombre,
@@ -144,8 +149,8 @@ export async function dbGetUsuarios(): Promise<Omit<Usuario, 'passWeb'>[]> {
 }
 
 export async function dbGetUsuarioByCedula(cedula: string): Promise<Usuario | null> {
-  const { data, error } = await supabase
-    .from('usuarios')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('usuarios') as any)
     .select('id,cedula,nombre,rol,tiendas,tiendas_roles,grupos,telefono,activo,creado_por,pass_web')
     .eq('cedula', cedula)
     .single();
@@ -166,7 +171,8 @@ export async function dbGetUsuarioByCedula(cedula: string): Promise<Usuario | nu
 }
 
 export async function dbSetPassWeb(userId: string, passHash: string): Promise<void> {
-  await supabase.from('usuarios').update({ pass_web: passHash }).eq('id', userId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('usuarios') as any).update({ pass_web: passHash }).eq('id', userId);
 }
 
 export async function dbUpsertUsuario(u: Omit<Usuario, 'passWeb'>): Promise<void> {
@@ -189,20 +195,22 @@ export async function dbUpsertUsuario(u: Omit<Usuario, 'passWeb'>): Promise<void
 }
 
 export async function dbDeleteUsuario(id: string): Promise<void> {
-  await supabase.from('usuarios').delete().eq('id', id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('usuarios') as any).delete().eq('id', id);
 }
 
 // ─── REGISTROS ────────────────────────────────────────────────────────────────
 
 export async function dbGetRegistros(tiendaId?: string): Promise<Registro[]> {
-  let query = supabase
-    .from('registros')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase.from('registros') as any)
     .select('*')
     .order('escaneado_en', { ascending: false });
   if (tiendaId) query = query.eq('tienda_id', tiendaId);
   const { data, error } = await query;
   if (error || !data) return [];
-  return data.map(r => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map(r => ({
     id:            r.id,
     tiendaId:      r.tienda_id,
     itemId:        r.item_id,
@@ -220,22 +228,25 @@ export async function dbGetRegistros(tiendaId?: string): Promise<Registro[]> {
 }
 
 export async function dbDeleteRegistro(id: string): Promise<void> {
-  await supabase.from('registros').delete().eq('id', id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('registros') as any).delete().eq('id', id);
 }
 
 export async function dbLimpiarRegistrosTienda(tiendaId: string): Promise<void> {
-  await supabase.from('registros').delete().eq('tienda_id', tiendaId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('registros') as any).delete().eq('tienda_id', tiendaId);
 }
 
 // ─── CATÁLOGOS ────────────────────────────────────────────────────────────────
 
 export async function dbGetCatalogo(tiendaId: string): Promise<Articulo[]> {
-  const { data, error } = await supabase
-    .from('catalogos')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('catalogos') as any)
     .select('*')
     .eq('tienda_id', tiendaId);
   if (error || !data) return [];
-  return data.map(r => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map(r => ({
     itemId:      r.item_id,
     descripcion: r.descripcion,
     ubicacion:   r.ubicacion,
@@ -245,9 +256,11 @@ export async function dbGetCatalogo(tiendaId: string): Promise<Articulo[]> {
 }
 
 export async function dbUpsertCatalogo(tiendaId: string, articulos: Articulo[]): Promise<void> {
-  await supabase.from('catalogos').delete().eq('tienda_id', tiendaId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('catalogos') as any).delete().eq('tienda_id', tiendaId);
   if (!articulos.length) return;
-  await supabase.from('catalogos').insert(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('catalogos') as any).insert(
     articulos.map(a => ({
       tienda_id:   tiendaId,
       item_id:     a.itemId,
@@ -262,22 +275,25 @@ export async function dbUpsertCatalogo(tiendaId: string, articulos: Articulo[]):
 // ─── SOBRANTES ────────────────────────────────────────────────────────────────
 
 export async function dbConfirmarSobrante(id: string): Promise<void> {
-  await supabase.from('sobrantes').update({ estado: 'CONFIRMADO' }).eq('id', id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('sobrantes') as any).update({ estado: 'CONFIRMADO' }).eq('id', id);
 }
 
 export async function dbDeleteSobrante(id: string): Promise<void> {
-  await supabase.from('sobrantes').delete().eq('id', id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from('sobrantes') as any).delete().eq('id', id);
 }
 
 export async function dbGetSobrantes(tiendaId?: string): Promise<SobranteSinStock[]> {
-  let query = supabase
-    .from('sobrantes')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase.from('sobrantes') as any)
     .select('*')
     .order('creado_en', { ascending: false });
   if (tiendaId) query = query.eq('tienda_id', tiendaId);
   const { data, error } = await query;
   if (error || !data) return [];
-  return data.map(r => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map(r => ({
     id:            r.id,
     tiendaId:      r.tienda_id,
     codigo:        r.codigo,
@@ -329,7 +345,8 @@ export async function dbGetTiendasConStats(): Promise<TiendaStats[]> {
   const [tiendas, registros, catalogosRaw] = await Promise.all([
     dbGetTiendas(),
     dbGetRegistros(),
-    supabase.from('catalogos').select('tienda_id'),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.from('catalogos') as any).select('tienda_id'),
   ]);
 
   const catalogoCount: Record<string, number> = {};
