@@ -16,7 +16,12 @@ interface Props {
  */
 export function Modal({ onClose, children }: Props) {
   const [mounted, setMounted] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRef  = useRef<HTMLDivElement>(null);
+  // Stable ref so the effect runs exactly once on mount without depending
+  // on onClose identity — prevents re-focus every time parent re-renders
+  // (e.g. while typing in a form field updates parent state).
+  const onCloseRef  = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; });
 
   useEffect(() => {
     setMounted(true);
@@ -37,7 +42,7 @@ export function Modal({ onClose, children }: Props) {
     }, 50);
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key === 'Escape') { onCloseRef.current(); return; }
       if (e.key !== 'Tab' || !contentRef.current) return;
 
       // Focus trap — keep Tab cycling inside modal
@@ -62,7 +67,8 @@ export function Modal({ onClose, children }: Props) {
       document.body.style.overflow = prev;
       document.removeEventListener('keydown', onKey);
     };
-  }, [onClose]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!mounted) return null;
 

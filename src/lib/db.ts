@@ -624,6 +624,32 @@ export async function dbGetAuditoriaSnapshots(tiendaId: string): Promise<Omit<Au
   }));
 }
 
+export async function dbGetDashboardHistory(): Promise<{
+  fecha:          string;
+  tiendaNombre:   string;
+  valorFaltante:  number;
+  valorSobrante:  number;
+  totalRegistros: number;
+  progreso:       number;
+}[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any)
+    .from('auditoria_historial')
+    .select('cerrado_en,tienda_nombre,valor_faltante,valor_sobrante,total_registros,progreso')
+    .order('cerrado_en', { ascending: true })
+    .limit(40);
+  if (!data) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map(r => ({
+    fecha:          r.cerrado_en,
+    tiendaNombre:   r.tienda_nombre,
+    valorFaltante:  Number(r.valor_faltante),
+    valorSobrante:  Number(r.valor_sobrante),
+    totalRegistros: r.total_registros,
+    progreso:       r.progreso,
+  }));
+}
+
 export async function dbGetAuditoriaSnapshot(snapId: string): Promise<AuditoriaSnapshot | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)

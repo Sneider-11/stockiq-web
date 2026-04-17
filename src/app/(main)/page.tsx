@@ -2,14 +2,16 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { getSession } from '@/lib/auth';
-import { dbGetTiendasConStats, dbGetGrupos } from '@/lib/db';
+import { dbGetTiendasConStats, dbGetGrupos, dbGetDashboardHistory } from '@/lib/db';
 import { formatCOP } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
+import { DashboardCharts } from '@/components/dashboard/DashboardCharts';
 import {
   TrendingDown, TrendingUp, Boxes, CheckCircle,
-  ChevronRight, AlertCircle, Activity, BarChart3,
-  ScanLine, Hash, Zap, Building2,
+  ChevronRight, AlertCircle, BarChart3,
+  Hash, Zap, Building2, ShieldAlert,
+  Target, ClipboardCheck,
 } from 'lucide-react';
 import type { TiendaStats, GrupoComercial } from '@/types';
 
@@ -159,64 +161,129 @@ function TiendaCard({ stats, index }: { stats: TiendaStats; index: number }) {
   );
 }
 
-function GlobalSummary({ stats }: { stats: TiendaStats[] }) {
-  const totalFaltante   = stats.reduce((a, s) => a + s.valorFaltante, 0);
-  const totalSobrante   = stats.reduce((a, s) => a + s.valorSobrante, 0);
-  const totalRegistros  = stats.reduce((a, s) => a + s.totalRegistros, 0);
-  const totalCatalogo   = stats.reduce((a, s) => a + s.totalCatalogo,  0);
-  const promedioProgreso = stats.length
-    ? Math.round(stats.reduce((a, s) => a + s.progreso, 0) / stats.length)
-    : 0;
+// ── KPIs inteligentes ─────────────────────────────────────────────────────────
+function DashboardKPIs({ stats }: { stats: TiendaStats[] }) {
+  const totalRegistros = stats.reduce((a, s) => a + s.totalRegistros, 0);
+  const totalSinDif    = stats.reduce((a, s) => a + s.sinDiferencia,  0);
+  const totalFaltante  = stats.reduce((a, s) => a + s.valorFaltante,  0);
+  const totalSobrante  = stats.reduce((a, s) => a + s.valorSobrante,  0);
+  const diferenciaNeta = totalSobrante - totalFaltante;
 
-  const items = [
-    {
-      label: 'Artículos escaneados',
-      node: <AnimatedNumber value={totalRegistros} className="text-xl font-black text-zinc-100 tracking-tight" />,
-      sub: `de ${totalCatalogo} en catálogo`,
-      icon: <ScanLine size={18} />,
-      color: 'text-vlt',
-      bg: 'bg-zinc-900/60 border-zinc-800/60 hover:border-vlt/30',
-    },
-    {
-      label: 'Progreso promedio',
-      node: <AnimatedNumber value={promedioProgreso} format="percent" className="text-xl font-black text-zinc-100 tracking-tight" />,
-      sub: 'todas las tiendas',
-      icon: <Activity size={18} />,
-      color: 'text-emerald-400',
-      bg: 'bg-zinc-900/60 border-zinc-800/60 hover:border-emerald-800/50',
-    },
-    {
-      label: 'Valor en faltantes',
-      node: <AnimatedNumber value={totalFaltante} format="cop" className="text-xl font-black text-zinc-100 tracking-tight truncate" />,
-      sub: 'acumulado',
-      icon: <TrendingDown size={18} />,
-      color: 'text-red-400',
-      bg: 'bg-red-950/20 border-red-900/30 hover:border-red-800/50',
-    },
-    {
-      label: 'Valor en sobrantes',
-      node: <AnimatedNumber value={totalSobrante} format="cop" className="text-xl font-black text-zinc-100 tracking-tight truncate" />,
-      sub: 'acumulado',
-      icon: <TrendingUp size={18} />,
-      color: 'text-emerald-400',
-      bg: 'bg-emerald-950/20 border-emerald-900/30 hover:border-emerald-800/50',
-    },
-  ];
+  const precision    = totalRegistros > 0 ? Math.round((totalSinDif / totalRegistros) * 100) : 0;
+  const cumplimiento = stats.length > 0
+    ? Math.round(stats.filter(s => s.progreso >= 80).length / stats.length * 100)
+    : 0;
+  const tiendasOk    = stats.filter(s => s.progreso >= 80).length;
+
+  // Colores dinámicos
+  const precColor  = precision    >= 80 ? 'text-emerald-400' : precision    >= 50 ? 'text-amber-400' : 'text-red-400';
+  const cumplColor = cumplimiento >= 70 ? 'text-emerald-400' : cumplimiento >= 40 ? 'text-amber-400' : 'text-red-400';
+  const netaColor  = diferenciaNeta >= 0 ? 'text-emerald-400' : 'text-red-400';
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className={`rounded-2xl border p-4 transition-all duration-200 anim-fade-up ${item.bg}`}
-          style={{ animationDelay: `${i * 60}ms` }}
-        >
-          <div className={`${item.color} mb-3`}>{item.icon}</div>
-          {item.node}
-          <p className="text-xs text-zinc-500 mt-0.5">{item.label}</p>
-          <p className="text-[10px] text-zinc-500 mt-0.5">{item.sub}</p>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+      {/* KPI 1 — Precisión de inventario */}
+      <div
+        className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-5 relative overflow-hidden hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up"
+        style={{ animationDelay: '0ms' }}
+      >
+        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-violet-600 to-transparent" />
+        <div className="flex items-start justify-between mb-4">
+          <div className="w-9 h-9 rounded-xl bg-violet-950/60 border border-violet-900/40 flex items-center justify-center">
+            <Target size={16} className="text-vlt" />
+          </div>
+          <span className={`text-[10px] font-bold ${precColor}`}>
+            {precision >= 80 ? '↑ Óptimo' : precision >= 50 ? '∼ Moderado' : '↓ Bajo'}
+          </span>
         </div>
-      ))}
+        <AnimatedNumber value={precision} format="percent" className={`text-2xl font-black tracking-tight ${precColor}`} />
+        <p className="text-xs font-semibold text-zinc-300 mt-1.5">Precisión de inventario</p>
+        <p className="text-[10px] text-zinc-600 mt-0.5">artículos sin diferencia vs. escaneados</p>
+      </div>
+
+      {/* KPI 2 — Diferencia neta */}
+      <div
+        className={`rounded-2xl border bg-zinc-900/50 p-5 relative overflow-hidden hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up ${
+          diferenciaNeta >= 0 ? 'border-emerald-900/40 hover:border-emerald-800/60' : 'border-red-900/40 hover:border-red-800/60'
+        }`}
+        style={{ animationDelay: '60ms' }}
+      >
+        <div className={`absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r ${
+          diferenciaNeta >= 0 ? 'from-emerald-600' : 'from-red-600'
+        } to-transparent`} />
+        <div className="flex items-start justify-between mb-4">
+          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${
+            diferenciaNeta >= 0
+              ? 'bg-emerald-950/60 border-emerald-900/40'
+              : 'bg-red-950/60 border-red-900/40'
+          }`}>
+            {diferenciaNeta >= 0
+              ? <TrendingUp size={16} className="text-emerald-400" />
+              : <TrendingDown size={16} className="text-red-400" />}
+          </div>
+          <span className={`text-[10px] font-bold ${netaColor}`}>
+            {diferenciaNeta >= 0 ? 'Balance +' : 'Balance −'}
+          </span>
+        </div>
+        <div className={`text-2xl font-black tracking-tight ${netaColor}`}>
+          <span className="text-xl">{diferenciaNeta >= 0 ? '+' : '−'}</span>
+          <AnimatedNumber value={Math.abs(diferenciaNeta)} format="cop" className="" />
+        </div>
+        <p className="text-xs font-semibold text-zinc-300 mt-1.5">Diferencia neta</p>
+        <p className="text-[10px] text-zinc-600 mt-0.5">
+          {diferenciaNeta >= 0 ? 'Sobrantes superan faltantes' : 'Faltantes superan sobrantes'}
+        </p>
+      </div>
+
+      {/* KPI 3 — Índice de cumplimiento */}
+      <div
+        className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-5 relative overflow-hidden hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up"
+        style={{ animationDelay: '120ms' }}
+      >
+        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-sky-600 to-transparent" />
+        <div className="flex items-start justify-between mb-4">
+          <div className="w-9 h-9 rounded-xl bg-sky-950/60 border border-sky-900/40 flex items-center justify-center">
+            <ClipboardCheck size={16} className="text-sky-400" />
+          </div>
+          <span className={`text-[10px] font-bold ${cumplColor}`}>
+            {tiendasOk}/{stats.length} tiendas
+          </span>
+        </div>
+        <AnimatedNumber value={cumplimiento} format="percent" className={`text-2xl font-black tracking-tight ${cumplColor}`} />
+        <p className="text-xs font-semibold text-zinc-300 mt-1.5">Índice de cumplimiento</p>
+        <p className="text-[10px] text-zinc-600 mt-0.5">tiendas con progreso ≥ 80%</p>
+      </div>
+
+      {/* KPI 4 — Exposición al riesgo */}
+      <div
+        className={`rounded-2xl border bg-zinc-900/50 p-5 relative overflow-hidden hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up ${
+          totalFaltante > 0 ? 'border-red-900/40 hover:border-red-800/60' : 'border-zinc-800/70 hover:border-zinc-700'
+        }`}
+        style={{ animationDelay: '180ms' }}
+      >
+        <div className={`absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r ${
+          totalFaltante > 0 ? 'from-red-600' : 'from-zinc-600'
+        } to-transparent`} />
+        <div className="flex items-start justify-between mb-4">
+          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${
+            totalFaltante > 0 ? 'bg-red-950/60 border-red-900/40' : 'bg-zinc-800/60 border-zinc-700/40'
+          }`}>
+            <ShieldAlert size={16} className={totalFaltante > 0 ? 'text-red-400' : 'text-zinc-500'} />
+          </div>
+          <span className={`text-[10px] font-bold ${totalFaltante > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+            {totalFaltante === 0 ? '✓ Sin riesgo' : '⚠ Revisar'}
+          </span>
+        </div>
+        <AnimatedNumber
+          value={totalFaltante}
+          format="cop"
+          className={`text-2xl font-black tracking-tight ${totalFaltante > 0 ? 'text-red-400' : 'text-zinc-400'}`}
+        />
+        <p className="text-xs font-semibold text-zinc-300 mt-1.5">Exposición al riesgo</p>
+        <p className="text-[10px] text-zinc-600 mt-0.5">valor acumulado en faltantes</p>
+      </div>
+
     </div>
   );
 }
@@ -274,9 +341,10 @@ function GrupoSection({
 
 export default async function HomePage() {
   const user = await getSession();
-  const [allStats, grupos] = await Promise.all([
+  const [allStats, grupos, history] = await Promise.all([
     dbGetTiendasConStats(),
     dbGetGrupos(),
+    dbGetDashboardHistory(),
   ]);
 
   // Filtrar las tiendas visibles según el rol
@@ -345,8 +413,11 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* ── Global summary ── */}
-      {stats.length > 0 && <GlobalSummary stats={stats} />}
+      {/* ── KPIs inteligentes ── */}
+      {stats.length > 0 && <DashboardKPIs stats={stats} />}
+
+      {/* ── Gráficas ── */}
+      {stats.length > 0 && <DashboardCharts stats={stats} history={history} />}
 
       {/* ── Estado vacío ── */}
       {stats.length === 0 && (
