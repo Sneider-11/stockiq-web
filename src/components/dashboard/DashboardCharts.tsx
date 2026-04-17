@@ -7,8 +7,7 @@ import {
   PieChart, Pie, Cell,
   LineChart, Line,
 } from 'recharts';
-import { cn } from '@/lib/utils';
-import { formatCOP } from '@/lib/utils';
+import { cn, formatCOP } from '@/lib/utils';
 import type { TiendaStats } from '@/types';
 
 export interface HistoryPoint {
@@ -144,9 +143,6 @@ export function DashboardCharts({ stats, history }: Props) {
     }
     return Array.from(map.entries()).map(([fecha, v]) => ({ fecha, ...v }));
   }, [history]);
-
-  const totalEscaneados = stats.reduce((a, s) => a + s.totalRegistros, 0);
-  if (totalEscaneados === 0 && lineData.length === 0) return null;
 
   const hasBar     = barData.some(d => d.valorFaltante + d.valorSobrante > 0 || d.faltantes + d.sobrantes > 0);
   const hasDonut   = donutData.length > 0;
