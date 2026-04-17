@@ -2,19 +2,26 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { dbGetTiendas, dbGetSobrantes } from '@/lib/db';
+import { dbGetTiendas, dbGetSobrantes_paginados, SOBRANTES_PAGE_SIZE } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { ArrowLeft, Package, ChevronRight, Home } from 'lucide-react';
 import SobrantesClient from './SobrantesClient';
+import Pagination from '@/components/ui/Pagination';
 
-interface Props { params: Promise<{ id: string }> }
+interface Props {
+  params:       Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string }>;
+}
 
-export default async function SobrantesPage({ params }: Props) {
-  const { id } = await params;
-  const [user, tiendas, sobrantes] = await Promise.all([
+export default async function SobrantesPage({ params, searchParams }: Props) {
+  const { id }   = await params;
+  const { page: pageStr } = await searchParams;
+  const page = Math.max(1, parseInt(pageStr ?? '1', 10) || 1);
+
+  const [user, tiendas, { data: sobrantes, total }] = await Promise.all([
     getSession(),
     dbGetTiendas(),
-    dbGetSobrantes(id),
+    dbGetSobrantes_paginados(id, page),
   ]);
 
   const tienda = tiendas.find(t => t.id === id);
@@ -49,7 +56,7 @@ export default async function SobrantesPage({ params }: Props) {
           </div>
           <div>
             <h1 className="text-lg font-black text-zinc-100">Sobrantes sin stock</h1>
-            <p className="text-xs text-zinc-500">{tienda.nombre} · {sobrantes.length} registros</p>
+            <p className="text-xs text-zinc-500">{tienda.nombre} · {total} registros</p>
           </div>
         </div>
       </div>
@@ -58,6 +65,13 @@ export default async function SobrantesPage({ params }: Props) {
         initialSobrantes={sobrantes}
         tiendaId={id}
         canManage={canManage}
+      />
+
+      <Pagination
+        page={page}
+        pageSize={SOBRANTES_PAGE_SIZE}
+        total={total}
+        basePath={`/tienda/${id}/sobrantes`}
       />
     </div>
   );

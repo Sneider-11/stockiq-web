@@ -201,6 +201,43 @@ export async function dbDeleteUsuario(id: string): Promise<void> {
 
 // ─── REGISTROS ────────────────────────────────────────────────────────────────
 
+export const REGISTROS_PAGE_SIZE = 50;
+export const SOBRANTES_PAGE_SIZE = 30;
+
+export async function dbGetRegistrosPaginados(
+  tiendaId: string,
+  page: number,
+): Promise<{ data: Registro[]; total: number }> {
+  const from = (page - 1) * REGISTROS_PAGE_SIZE;
+  const to   = from + REGISTROS_PAGE_SIZE - 1;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error, count } = await (supabase.from('registros') as any)
+    .select('*', { count: 'exact' })
+    .eq('tienda_id', tiendaId)
+    .order('escaneado_en', { ascending: false })
+    .range(from, to);
+  if (error || !data) return { data: [], total: 0 };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return {
+    total: count ?? 0,
+    data: (data as any[]).map(r => ({
+      id:            r.id,
+      tiendaId:      r.tienda_id,
+      itemId:        r.item_id,
+      descripcion:   r.descripcion,
+      ubicacion:     r.ubicacion,
+      stockSistema:  r.stock_sistema,
+      costoUnitario: r.costo_unitario,
+      cantidad:      r.cantidad,
+      nota:          r.nota          ?? '',
+      fotoUri:       r.foto_uri      ?? null,
+      usuarioNombre: r.usuario_nombre,
+      escaneadoEn:   r.escaneado_en,
+      clasificacion: r.clasificacion,
+    })),
+  };
+}
+
 export async function dbGetRegistros(tiendaId?: string): Promise<Registro[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (supabase.from('registros') as any)
@@ -293,7 +330,12 @@ export async function dbGetSobrantes(tiendaId?: string): Promise<SobranteSinStoc
   const { data, error } = await query;
   if (error || !data) return [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data as any[]).map(r => ({
+  return (data as any[]).map(mapSobrante);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapSobrante(r: any): SobranteSinStock {
+  return {
     id:            r.id,
     tiendaId:      r.tienda_id,
     codigo:        r.codigo,
@@ -305,7 +347,24 @@ export async function dbGetSobrantes(tiendaId?: string): Promise<SobranteSinStoc
     cantidad:      r.cantidad,
     usuarioNombre: r.usuario_nombre,
     registradoEn:  r.registrado_en,
-  }));
+  };
+}
+
+export async function dbGetSobrantes_paginados(
+  tiendaId: string,
+  page: number,
+): Promise<{ data: SobranteSinStock[]; total: number }> {
+  const from = (page - 1) * SOBRANTES_PAGE_SIZE;
+  const to   = from + SOBRANTES_PAGE_SIZE - 1;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error, count } = await (supabase.from('sobrantes') as any)
+    .select('*', { count: 'exact' })
+    .eq('tienda_id', tiendaId)
+    .order('creado_en', { ascending: false })
+    .range(from, to);
+  if (error || !data) return { data: [], total: 0 };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return { total: count ?? 0, data: (data as any[]).map(mapSobrante) };
 }
 
 // ─── ESTADÍSTICAS por GRUPO (calculadas) ─────────────────────────────────────

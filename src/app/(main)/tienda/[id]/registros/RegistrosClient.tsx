@@ -28,9 +28,10 @@ interface Props {
   tiendaId: string;
   canDelete: boolean;
   canClear: boolean;
+  total: number; // total en BD (incluye otras páginas)
 }
 
-export default function RegistrosClient({ initialRegistros, tiendaId, canDelete, canClear }: Props) {
+export default function RegistrosClient({ initialRegistros, tiendaId, canDelete, canClear, total }: Props) {
   const toast = useToast();
   const [registros,      setRegistros]      = useState<Registro[]>(initialRegistros);
   const [deleting,       setDeleting]       = useState<string | null>(null);
@@ -164,8 +165,9 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
 
       {/* ── Contador ── */}
       <p className="text-xs text-zinc-500 mb-3">
-        {filtered.length} de {registros.length} registros
-        {(search || filtroClsf) && ' (filtrado)'}
+        {(search || filtroClsf)
+          ? `${filtered.length} de ${registros.length} en esta página (${total} total)`
+          : `${registros.length} en esta página · ${total} total`}
       </p>
 
       {/* ── Tabla ── */}

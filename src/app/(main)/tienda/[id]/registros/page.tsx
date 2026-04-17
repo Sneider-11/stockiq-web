@@ -2,19 +2,26 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { dbGetTiendas, dbGetRegistros } from '@/lib/db';
+import { dbGetTiendas, dbGetRegistrosPaginados, REGISTROS_PAGE_SIZE } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { ArrowLeft, Package, ChevronRight, Home } from 'lucide-react';
 import RegistrosClient from './RegistrosClient';
+import Pagination from '@/components/ui/Pagination';
 
-interface Props { params: Promise<{ id: string }> }
+interface Props {
+  params:       Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string }>;
+}
 
-export default async function RegistrosPage({ params }: Props) {
-  const { id } = await params;
-  const [user, tiendas, registros] = await Promise.all([
+export default async function RegistrosPage({ params, searchParams }: Props) {
+  const { id }   = await params;
+  const { page: pageStr } = await searchParams;
+  const page = Math.max(1, parseInt(pageStr ?? '1', 10) || 1);
+
+  const [user, tiendas, { data: registros, total }] = await Promise.all([
     getSession(),
     dbGetTiendas(),
-    dbGetRegistros(id),
+    dbGetRegistrosPaginados(id, page),
   ]);
 
   const tienda = tiendas.find(t => t.id === id);
@@ -50,7 +57,7 @@ export default async function RegistrosPage({ params }: Props) {
           </div>
           <div>
             <h1 className="text-lg font-black text-zinc-100">Registros</h1>
-            <p className="text-xs text-zinc-500">{tienda.nombre} · {registros.length} artículos escaneados</p>
+            <p className="text-xs text-zinc-500">{tienda.nombre} · {total} artículos escaneados</p>
           </div>
         </div>
       </div>
@@ -60,6 +67,14 @@ export default async function RegistrosPage({ params }: Props) {
         tiendaId={id}
         canDelete={canDelete}
         canClear={canClear}
+        total={total}
+      />
+
+      <Pagination
+        page={page}
+        pageSize={REGISTROS_PAGE_SIZE}
+        total={total}
+        basePath={`/tienda/${id}/registros`}
       />
     </div>
   );
