@@ -311,6 +311,39 @@ export async function dbUpsertCatalogo(tiendaId: string, articulos: Articulo[]):
 
 // ─── SOBRANTES ────────────────────────────────────────────────────────────────
 
+export async function dbCreateSobrante(s: {
+  tiendaId:      string;
+  codigo:        string;
+  descripcion:   string;
+  ubicacion:     string;
+  precio:        number;
+  cantidad:      number;
+  usuarioNombre: string;
+}): Promise<SobranteSinStock> {
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('sobrantes') as any)
+    .insert({
+      id,
+      tienda_id:      s.tiendaId,
+      codigo:         s.codigo,
+      descripcion:    s.descripcion,
+      ubicacion:      s.ubicacion,
+      foto_uri:       '',
+      estado:         'PENDIENTE',
+      precio:         s.precio,
+      cantidad:       s.cantidad,
+      usuario_nombre: s.usuarioNombre,
+      registrado_en:  now,
+      creado_en:      now,
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return mapSobrante(data);
+}
+
 export async function dbConfirmarSobrante(id: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('sobrantes') as any).update({ estado: 'CONFIRMADO' }).eq('id', id);

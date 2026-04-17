@@ -23,12 +23,17 @@ export function Modal({ onClose, children }: Props) {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Focus first focusable element after paint
+    // Focus first input/select/textarea — if none, fallback to first button.
+    // Intentionally skips buttons as first candidate so the X close button
+    // (which is always a button and comes first in the DOM) never steals focus.
     const timer = setTimeout(() => {
-      const el = contentRef.current?.querySelector<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      const input = contentRef.current?.querySelector<HTMLElement>(
+        'input:not([disabled]):not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea:not([disabled]), select:not([disabled])',
       );
-      el?.focus();
+      const fallback = contentRef.current?.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      );
+      (input ?? fallback)?.focus();
     }, 50);
 
     const onKey = (e: KeyboardEvent) => {
