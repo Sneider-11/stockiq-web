@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { dbSetModoInventario } from '@/lib/db';
+import { dbSetModoInventario, dbSaveAuditoriaSnapshot } from '@/lib/db';
 
 interface Params { params: Promise<{ id: string }> }
 
@@ -16,6 +16,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     if (modo !== 'ONLINE' && modo !== 'OFFLINE') {
       return NextResponse.json({ error: 'Modo inválido.' }, { status: 400 });
+    }
+
+    // Al cerrar el inventario, guardar snapshot histórico antes de cambiar el modo
+    if (modo === 'OFFLINE') {
+      await dbSaveAuditoriaSnapshot(id, session.nombre);
     }
 
     await dbSetModoInventario(id, modo);

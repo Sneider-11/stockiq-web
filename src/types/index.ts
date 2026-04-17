@@ -99,6 +99,27 @@ export interface GrupoStats {
   valorSobrante:  number;
 }
 
+// ─── Historial de auditorías ──────────────────────────────────────────────────
+export interface AuditoriaSnapshot {
+  id:             string;
+  tiendaId:       string;
+  tiendaNombre:   string;
+  cerradoPor:     string | null;
+  cerradoEn:      string;
+  totalCatalogo:  number;
+  totalRegistros: number;
+  progreso:       number;
+  valorFaltante:  number;
+  valorSobrante:  number;
+  faltantes:      number;
+  sobrantesReg:   number;
+  sinDiferencia:  number;
+  ceros:          number;
+  nivelRiesgo:    'BAJO' | 'MEDIO' | 'ALTO';
+  registros:      Registro[];
+  sobrantes:      SobranteSinStock[];
+}
+
 // ─── Estadísticas de tienda (calculadas) ──────────────────────────────────────
 export interface TiendaStats {
   tienda: Tienda;

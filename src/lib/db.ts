@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Tienda, Usuario, Articulo, Registro, SobranteSinStock, TiendaStats, GrupoComercial, GrupoStats } from '../types';
+import type { Tienda, Usuario, Articulo, Registro, SobranteSinStock, TiendaStats, GrupoComercial, GrupoStats, AuditoriaSnapshot } from '../types';
 
 // ─── GRUPOS COMERCIALES ───────────────────────────────────────────────────────
 
@@ -446,4 +446,117 @@ export async function dbMarkAllNotificationsRead(cedula: string): Promise<void> 
     .update({ read: true })
     .eq('user_id', cedula)
     .eq('read', false);
+}
+
+// ─── HISTORIAL DE AUDITORÍAS ──────────────────────────────────────────────────
+
+function calcNivelRiesgo(progreso: number, faltantes: number, total: number): 'BAJO' | 'MEDIO' | 'ALTO' {
+  const faltPct = total > 0 ? (faltantes / total) * 100 : 0;
+  if (progreso >= 95 && faltPct <= 5)  return 'BAJO';
+  if (progreso >= 80 && faltPct <= 15) return 'MEDIO';
+  return 'ALTO';
+}
+
+export async function dbSaveAuditoriaSnapshot(
+  tiendaId: string,
+  cerradoPor: string | null,
+): Promise<void> {
+  const [tiendas, registros, sobrantes, catalogo] = await Promise.all([
+    dbGetTiendas(),
+    dbGetRegistros(tiendaId),
+    dbGetSobrantes(tiendaId),
+    dbGetCatalogo(tiendaId),
+  ]);
+
+  const tienda = tiendas.find(t => t.id === tiendaId);
+  if (!tienda) return;
+
+  const total        = catalogo.length;
+  const faltantes    = registros.filter(r => r.clasificacion === 'FALTANTE');
+  const sobrantesReg = registros.filter(r => r.clasificacion === 'SOBRANTE');
+  const sinDif       = registros.filter(r => r.clasificacion === 'SIN_DIF');
+  const ceros        = registros.filter(r => r.clasificacion === 'CERO');
+  const progreso     = total > 0 ? Math.round((registros.length / total) * 100) : 0;
+  const valorFaltante = faltantes.reduce(
+    (a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0,
+  );
+  const valorSobrante = sobrantesReg.reduce(
+    (a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0,
+  );
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('auditoria_historial').insert({
+    tienda_id:       tiendaId,
+    tienda_nombre:   tienda.nombre,
+    cerrado_por:     cerradoPor,
+    total_catalogo:  total,
+    total_registros: registros.length,
+    progreso,
+    valor_faltante:  valorFaltante,
+    valor_sobrante:  valorSobrante,
+    faltantes:       faltantes.length,
+    sobrantes_reg:   sobrantesReg.length,
+    sin_diferencia:  sinDif.length,
+    ceros:           ceros.length,
+    nivel_riesgo:    calcNivelRiesgo(progreso, faltantes.length, total),
+    registros:       registros,
+    sobrantes:       sobrantes,
+  });
+}
+
+export async function dbGetAuditoriaSnapshots(tiendaId: string): Promise<Omit<AuditoriaSnapshot, 'registros' | 'sobrantes'>[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('auditoria_historial')
+    .select('id,tienda_id,tienda_nombre,cerrado_por,cerrado_en,total_catalogo,total_registros,progreso,valor_faltante,valor_sobrante,faltantes,sobrantes_reg,sin_diferencia,ceros,nivel_riesgo')
+    .eq('tienda_id', tiendaId)
+    .order('cerrado_en', { ascending: false });
+  if (error || !data) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map(r => ({
+    id:             r.id,
+    tiendaId:       r.tienda_id,
+    tiendaNombre:   r.tienda_nombre,
+    cerradoPor:     r.cerrado_por  ?? null,
+    cerradoEn:      r.cerrado_en,
+    totalCatalogo:  r.total_catalogo,
+    totalRegistros: r.total_registros,
+    progreso:       r.progreso,
+    valorFaltante:  Number(r.valor_faltante),
+    valorSobrante:  Number(r.valor_sobrante),
+    faltantes:      r.faltantes,
+    sobrantesReg:   r.sobrantes_reg,
+    sinDiferencia:  r.sin_diferencia,
+    ceros:          r.ceros,
+    nivelRiesgo:    r.nivel_riesgo,
+  }));
+}
+
+export async function dbGetAuditoriaSnapshot(snapId: string): Promise<AuditoriaSnapshot | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('auditoria_historial')
+    .select('*')
+    .eq('id', snapId)
+    .single();
+  if (error || !data) return null;
+  return {
+    id:             data.id,
+    tiendaId:       data.tienda_id,
+    tiendaNombre:   data.tienda_nombre,
+    cerradoPor:     data.cerrado_por  ?? null,
+    cerradoEn:      data.cerrado_en,
+    totalCatalogo:  data.total_catalogo,
+    totalRegistros: data.total_registros,
+    progreso:       data.progreso,
+    valorFaltante:  Number(data.valor_faltante),
+    valorSobrante:  Number(data.valor_sobrante),
+    faltantes:      data.faltantes,
+    sobrantesReg:   data.sobrantes_reg,
+    sinDiferencia:  data.sin_diferencia,
+    ceros:          data.ceros,
+    nivelRiesgo:    data.nivel_riesgo,
+    registros:      data.registros  ?? [],
+    sobrantes:      data.sobrantes  ?? [],
+  };
 }

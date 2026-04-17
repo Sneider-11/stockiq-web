@@ -9,7 +9,7 @@ import { DescargarTiendaBtn } from '@/components/ui/DescargarTiendaBtn';
 import {
   ArrowLeft, Boxes, TrendingDown, TrendingUp,
   CheckCircle2, BarChart2, Upload, ClipboardList,
-  AlertTriangle, ScanLine, Hash, ChevronRight, FileText, Home,
+  AlertTriangle, ScanLine, Hash, ChevronRight, FileText, Home, History,
 } from 'lucide-react';
 import type { Registro } from '@/types';
 
@@ -97,6 +97,14 @@ export default async function TiendaPage({ params }: Props) {
       desc:    'Auditoría · análisis económico · equipo',
       iconBg:  '#7C3AED',          // violet-700 (color StockIQ)
       iconGlow:'rgba(124,58,237,0.35)',
+    },
+    {
+      href:    `/tienda/${id}/historial`,
+      label:   'Historial',
+      icon:    <History size={18} />,
+      desc:    'Auditorías anteriores guardadas',
+      iconBg:  '#0E7490',          // cyan-700
+      iconGlow:'rgba(14,116,144,0.35)',
     },
   ];
 
