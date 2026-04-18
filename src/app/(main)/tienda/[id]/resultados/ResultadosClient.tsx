@@ -32,6 +32,84 @@ const FILTROS = [
 
 interface Props { rows: ResultRow[]; tiendaNombre?: string }
 
+function buildPrintHTML(rows: ResultRow[], label: string, tiendaNombre: string | undefined, search: string): string {
+  const fecha   = new Date().toLocaleDateString('es-CO', { dateStyle: 'full' });
+  const hora    = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+  const filas   = rows
+    .sort((a, b) => a.descripcion.localeCompare(b.descripcion))
+    .map((r, i) => {
+      const dif = r.diferencia === null ? '—' : r.diferencia > 0 ? `+${r.diferencia}` : String(r.diferencia);
+      const bg  = i % 2 === 0 ? '#ffffff' : '#f5f5f5';
+      return `
+        <tr style="background:${bg};border-bottom:1px solid #ddd">
+          <td style="padding:4px 6px;font-weight:500">${r.descripcion}</td>
+          <td style="padding:4px 6px;font-family:monospace;color:#555;font-size:9px">${r.itemId}</td>
+          <td style="padding:4px 6px;color:#444">${r.ubicacion || '—'}</td>
+          <td style="padding:4px 6px;text-align:center">${r.stockSist}</td>
+          <td style="padding:4px 6px;text-align:center;font-weight:600">${r.contado ?? '—'}</td>
+          <td style="padding:4px 6px;text-align:center;font-weight:700">${dif}</td>
+        </tr>`;
+    }).join('');
+
+  const searchInfo = search ? ` · búsqueda: "${search}"` : '';
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Hoja de Reconteo — ${label}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    thead tr { background: #1a1a1a; color: #fff; }
+    th { padding: 5px 6px; font-weight: 600; text-align: left; }
+    th:nth-child(4), th:nth-child(5), th:nth-child(6) { text-align: center; }
+    @media print {
+      body { padding: 0; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    }
+  </style>
+</head>
+<body>
+  <div style="border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-end">
+    <div>
+      <div style="font-size:15px;font-weight:bold">HOJA DE RECONTEO — ${label.toUpperCase()}</div>
+      ${tiendaNombre ? `<div style="font-size:11px;color:#444;margin-top:2px">${tiendaNombre}</div>` : ''}
+      <div style="font-size:10px;color:#666;margin-top:2px">${rows.length} artículo${rows.length !== 1 ? 's' : ''}${searchInfo}</div>
+    </div>
+    <div style="text-align:right;font-size:10px;color:#666">
+      <div>StockIQ · Grupo Orvion Tech</div>
+      <div>${fecha}</div>
+      <div>${hora}</div>
+    </div>
+  </div>
+
+  ${rows.length === 0
+    ? '<p style="text-align:center;color:#888;padding:20px">Sin artículos para imprimir con el filtro actual.</p>'
+    : `<table>
+      <thead>
+        <tr>
+          <th style="width:35%">NOMBRE / DESCRIPCIÓN</th>
+          <th style="width:15%">ID / CÓDIGO</th>
+          <th style="width:15%">UBICACIÓN</th>
+          <th style="width:11%;text-align:center">CANTIDAD</th>
+          <th style="width:11%;text-align:center">CONTEO</th>
+          <th style="width:13%;text-align:center">DIFERENCIA</th>
+        </tr>
+      </thead>
+      <tbody>${filas}</tbody>
+    </table>`
+  }
+
+  <div style="border-top:1px solid #ccc;margin-top:14px;padding-top:5px;display:flex;justify-content:space-between;color:#999;font-size:9px">
+    <span>StockIQ — Grupo Orvion Tech</span>
+    <span>Impreso el ${new Date().toLocaleString('es-CO')}</span>
+  </div>
+</body>
+</html>`;
+}
+
 export default function ResultadosClient({ rows, tiendaNombre }: Props) {
   const router       = useRouter();
   const searchParams = useSearchParams();
@@ -39,7 +117,6 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
   const [search, setSearch] = useState(() => searchParams.get('q')   ?? '');
   const [filtro, setFiltro] = useState(() => searchParams.get('clf') ?? '');
 
-  // Debounced URL sync — updates URL 400ms after last change
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncUrl = useCallback((q: string, clf: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -62,114 +139,22 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
     return matchSearch && matchFiltro;
   });
 
-  const faltantesImpresion = rows
-    .filter(r => r.clsf === 'FALTANTE' || r.clsf === 'CERO')
-    .sort((a, b) => b.valorDif - a.valorDif);
-
-  const sobrantesImpresion = rows
-    .filter(r => r.clsf === 'SOBRANTE')
-    .sort((a, b) => b.valorDif - a.valorDif);
-
-  const totalFaltante = faltantesImpresion.reduce((s, r) => s + r.valorDif, 0);
-  const totalSobrante = sobrantesImpresion.reduce((s, r) => s + r.valorDif, 0);
+  const handlePrint = useCallback(() => {
+    const label = FILTROS.find(f => f.value === filtro)?.label ?? 'Todos';
+    const html  = buildPrintHTML(filtered, label, tiendaNombre, search);
+    const win   = window.open('', '_blank', 'width=900,height=700');
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    // Pequeño delay para asegurar que el HTML cargó antes de imprimir
+    setTimeout(() => { win.print(); win.close(); }, 400);
+  }, [filtered, filtro, tiendaNombre, search]);
 
   return (
     <>
-      {/* ── Vista de impresión ── */}
-      <div className="hidden print:block text-black text-[11px]" style={{ fontFamily: 'Arial, sans-serif' }}>
-
-        {/* Encabezado */}
-        <div style={{ borderBottom: '2px solid black', paddingBottom: '8px', marginBottom: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '0.5px' }}>HOJA DE RECONTEO</div>
-              {tiendaNombre && <div style={{ fontSize: '12px', color: '#444', marginTop: '2px' }}>{tiendaNombre}</div>}
-            </div>
-            <div style={{ textAlign: 'right', fontSize: '10px', color: '#666' }}>
-              <div>StockIQ · Grupo Orvion Tech</div>
-              <div>{new Date().toLocaleDateString('es-CO', { dateStyle: 'full' })}</div>
-              <div>{new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabla reutilizable */}
-        {([
-          {
-            titulo: `FALTANTES Y CEROS`,
-            subtitulo: `${faltantesImpresion.length} artículos`,
-            total: totalFaltante,
-            totalLabel: 'TOTAL FALTANTE',
-            rows: faltantesImpresion,
-            difFn: (r: ResultRow) => r.diferencia !== null ? String(r.diferencia) : '—',
-          },
-          {
-            titulo: `SOBRANTES`,
-            subtitulo: `${sobrantesImpresion.length} artículos`,
-            total: totalSobrante,
-            totalLabel: 'TOTAL SOBRANTE',
-            rows: sobrantesImpresion,
-            difFn: (r: ResultRow) => r.diferencia !== null ? `+${r.diferencia}` : '—',
-          },
-        ] as const).filter(s => s.rows.length > 0).map(seccion => (
-          <section key={seccion.titulo} style={{ marginBottom: '20px', pageBreakInside: 'avoid' }}>
-            {/* Título de sección */}
-            <div style={{
-              background: '#1a1a1a', color: 'white', padding: '4px 8px',
-              fontWeight: 'bold', fontSize: '11px', letterSpacing: '0.8px',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
-              <span>{seccion.titulo} — {seccion.subtitulo}</span>
-              <span style={{ fontSize: '10px', fontWeight: 'normal' }}>
-                {seccion.totalLabel}: {formatCOP(seccion.total)}
-              </span>
-            </div>
-
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
-              <thead>
-                <tr style={{ background: '#f0f0f0', borderBottom: '1px solid #aaa' }}>
-                  <th style={{ textAlign: 'left',   padding: '4px 6px', fontWeight: '600', width: '32%' }}>NOMBRE / DESCRIPCIÓN</th>
-                  <th style={{ textAlign: 'left',   padding: '4px 6px', fontWeight: '600', width: '14%' }}>ID / CÓDIGO</th>
-                  <th style={{ textAlign: 'left',   padding: '4px 6px', fontWeight: '600', width: '14%' }}>UBICACIÓN</th>
-                  <th style={{ textAlign: 'center', padding: '4px 6px', fontWeight: '600', width: '10%' }}>CANTIDAD</th>
-                  <th style={{ textAlign: 'center', padding: '4px 6px', fontWeight: '600', width: '10%' }}>CONTEO</th>
-                  <th style={{ textAlign: 'center', padding: '4px 6px', fontWeight: '600', width: '10%' }}>DIF.</th>
-                  <th style={{ textAlign: 'right',  padding: '4px 6px', fontWeight: '600', width: '10%' }}>VALOR</th>
-                </tr>
-              </thead>
-              <tbody>
-                {seccion.rows.map((r, i) => (
-                  <tr key={r.itemId} style={{
-                    background: i % 2 === 0 ? '#fff' : '#f8f8f8',
-                    borderBottom: '1px solid #e0e0e0',
-                  }}>
-                    <td style={{ padding: '3px 6px', fontWeight: '500' }}>{r.descripcion}</td>
-                    <td style={{ padding: '3px 6px', fontFamily: 'monospace', color: '#555', fontSize: '9px' }}>{r.itemId}</td>
-                    <td style={{ padding: '3px 6px', color: '#444' }}>{r.ubicacion || '—'}</td>
-                    <td style={{ padding: '3px 6px', textAlign: 'center' }}>{r.stockSist}</td>
-                    <td style={{ padding: '3px 6px', textAlign: 'center', fontWeight: '600' }}>{r.contado ?? '—'}</td>
-                    <td style={{ padding: '3px 6px', textAlign: 'center', fontWeight: '700' }}>{seccion.difFn(r)}</td>
-                    <td style={{ padding: '3px 6px', textAlign: 'right', fontWeight: '600' }}>{formatCOP(r.valorDif)}</td>
-                  </tr>
-                ))}
-                <tr style={{ background: '#e8e8e8', borderTop: '2px solid #333', fontWeight: 'bold' }}>
-                  <td colSpan={6} style={{ padding: '4px 6px', textAlign: 'right' }}>{seccion.totalLabel}:</td>
-                  <td style={{ padding: '4px 6px', textAlign: 'right' }}>{formatCOP(seccion.total)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-        ))}
-
-        {/* Pie de página */}
-        <div style={{ borderTop: '1px solid #ccc', paddingTop: '6px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', color: '#888', fontSize: '9px' }}>
-          <span>StockIQ — Grupo Orvion Tech · stockiq-web.vercel.app</span>
-          <span>Impreso el {new Date().toLocaleString('es-CO')}</span>
-        </div>
-      </div>
-
-      {/* ── Filtros (pantalla) ── */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-5 print:hidden">
+      {/* ── Filtros ── */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
           <input
@@ -209,9 +194,9 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
           {(search || filtro) && ' (filtrado)'}
         </p>
         <button
-          onClick={() => window.print()}
+          onClick={handlePrint}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 text-xs font-semibold transition-all"
-          title="Imprimir faltantes y sobrantes para reconteo"
+          title="Imprimir listado actual para reconteo"
         >
           <Printer size={13} />
           Imprimir reconteo
@@ -219,7 +204,6 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
       </div>
 
       {/* ── Tabla ── */}
-      <div className="print:hidden">
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-zinc-600">
           <Package size={40} className="mb-3 opacity-30" />
@@ -275,7 +259,6 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
           </div>
         </div>
       )}
-      </div>
     </>
   );
 }

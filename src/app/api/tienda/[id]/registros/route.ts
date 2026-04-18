@@ -58,12 +58,14 @@ export async function POST(req: NextRequest, { params }: Params) {
 // DELETE /api/tienda/[id]/registros — limpiar TODOS los registros de una tienda
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const session = await getSession();
-  if (!session || session.rol !== 'SUPERADMIN') {
-    return NextResponse.json({ error: 'Solo el SUPERADMIN puede limpiar todos los registros.' }, { status: 403 });
+  if (!session) return NextResponse.json({ error: 'No autorizado.' }, { status: 401 });
+
+  const { id } = await params;
+  if (session.rol !== 'SUPERADMIN' && !session.tiendas.includes(id)) {
+    return NextResponse.json({ error: 'Sin acceso a esta tienda.' }, { status: 403 });
   }
 
   try {
-    const { id } = await params;
     await dbLimpiarRegistrosTienda(id);
     return NextResponse.json({ ok: true });
   } catch (err) {

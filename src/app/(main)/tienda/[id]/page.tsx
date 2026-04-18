@@ -6,6 +6,7 @@ import { dbGetTiendas, dbGetRegistros, dbGetCatalogo, dbGetSobrantes } from '@/l
 import { Badge } from '@/components/ui/Badge';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { DescargarTiendaBtn } from '@/components/ui/DescargarTiendaBtn';
+import { ReiniciarBtn } from '@/components/ui/ReiniciarBtn';
 import {
   ArrowLeft, Boxes, TrendingDown, TrendingUp,
   CheckCircle2, BarChart2, Upload, ClipboardList,
@@ -166,6 +167,7 @@ export default async function TiendaPage({ params }: Props) {
                 <Badge variant="success">Activo</Badge>
               </div>
             )}
+          <ReiniciarBtn tiendaId={id} tiendaNombre={tienda.nombre} />
           <DescargarTiendaBtn registros={registros} tiendaNombre={tienda.nombre} />
         </div>
       </div>

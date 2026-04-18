@@ -37,14 +37,15 @@ function clasificar(stock: number, cantidad: number): Clasificacion {
 }
 
 export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registrosIniciales }: Props) {
-  const [barcode,   setBarcode]   = useState('');
-  const [cantidad,  setCantidad]  = useState('1');
-  const [pending,   setPending]   = useState<Articulo | null>(null);   // artículo encontrado esperando confirmación
-  const [notFound,  setNotFound]  = useState(false);
-  const [saving,    setSaving]    = useState(false);
-  const [recent,    setRecent]    = useState<ScanResult[]>([]);
-  const [flash,     setFlash]     = useState<'ok' | 'err' | null>(null);
-  const [registros, setRegistros] = useState<Registro[]>(registrosIniciales);
+  const [barcode,      setBarcode]      = useState('');
+  const [cantidad,     setCantidad]     = useState('1');
+  const [pending,      setPending]      = useState<Articulo | null>(null);
+  const [notFound,     setNotFound]     = useState(false);
+  const [saving,       setSaving]       = useState(false);
+  const [recent,       setRecent]       = useState<ScanResult[]>([]);
+  const [flash,        setFlash]        = useState<'ok' | 'err' | null>(null);
+  const [registros,    setRegistros]    = useState<Registro[]>(registrosIniciales);
+  const [suggestions,  setSuggestions]  = useState<Articulo[]>([]);
 
   const barcodeRef  = useRef<HTMLInputElement>(null);
   const cantidadRef = useRef<HTMLInputElement>(null);
@@ -68,6 +69,32 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
     setTimeout(() => setFlash(null), 600);
   };
 
+  const computeSuggestions = useCallback((value: string): Articulo[] => {
+    if (value.length < 2) return [];
+    const q = value.toLowerCase();
+    const matches: Articulo[] = [];
+    for (const a of catalogo) {
+      if (a.itemId.toLowerCase().includes(q) || a.descripcion.toLowerCase().includes(q)) {
+        matches.push(a);
+        if (matches.length >= 6) break;
+      }
+    }
+    return matches;
+  }, [catalogo]);
+
+  const handleBarcodeChange = (value: string) => {
+    setBarcode(value);
+    if (!pending) setSuggestions(computeSuggestions(value));
+  };
+
+  const selectSuggestion = (a: Articulo) => {
+    setSuggestions([]);
+    setBarcode(a.itemId);
+    setPending(a);
+    setNotFound(false);
+    setCantidad('1');
+  };
+
   // Cuando el barcode gun presiona Enter (o el usuario pulsa Enter)
   const handleBarcodeSubmit = useCallback(() => {
     const code = barcode.trim();
@@ -75,10 +102,12 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
 
     const articulo = catalogoMap.current.get(code);
     if (articulo) {
+      setSuggestions([]);
       setPending(articulo);
       setNotFound(false);
       setCantidad('1');
     } else {
+      setSuggestions([]);
       setNotFound(true);
       setPending(null);
       triggerFlash('err');
@@ -86,7 +115,7 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
         setBarcode('');
         setNotFound(false);
         barcodeRef.current?.focus();
-      }, 1800);
+      }, 500);
     }
   }, [barcode]);
 
@@ -98,6 +127,7 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
       setBarcode('');
       setPending(null);
       setNotFound(false);
+      setSuggestions([]);
     }
   };
 
@@ -148,6 +178,7 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
   const cancelarPending = () => {
     setPending(null);
     setBarcode('');
+    setSuggestions([]);
     barcodeRef.current?.focus();
   };
 
@@ -224,7 +255,7 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
                 ref={barcodeRef}
                 type="text"
                 value={barcode}
-                onChange={e => setBarcode(e.target.value)}
+                onChange={e => handleBarcodeChange(e.target.value)}
                 onKeyDown={handleBarcodeKey}
                 placeholder="Código de barras..."
                 autoComplete="off"
@@ -234,11 +265,30 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
               />
               {barcode && (
                 <button
-                  onClick={e => { e.stopPropagation(); setBarcode(''); barcodeRef.current?.focus(); }}
+                  onClick={e => { e.stopPropagation(); setBarcode(''); setSuggestions([]); barcodeRef.current?.focus(); }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400"
                 >
                   <XCircle size={15} />
                 </button>
+              )}
+
+              {/* Sugerencias */}
+              {suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1.5 z-20 rounded-xl border border-zinc-700/60 bg-zinc-900 shadow-xl overflow-hidden">
+                  {suggestions.map(a => (
+                    <button
+                      key={a.itemId}
+                      onMouseDown={e => { e.preventDefault(); selectSuggestion(a); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/70 transition-colors text-left"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-zinc-200 truncate">{a.descripcion}</p>
+                        <p className="text-[10px] text-zinc-500 font-mono">{a.itemId}{a.ubicacion ? ` · ${a.ubicacion}` : ''}</p>
+                      </div>
+                      <span className="text-[10px] text-zinc-500 shrink-0">Sist: <span className="text-zinc-300 font-bold">{a.stock}</span></span>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 

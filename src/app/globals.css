@@ -406,3 +406,32 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   PRINT
+   Las clases print:hidden / print:block de Tailwind no
+   garantizan orden de cascada en v4. Usamos clases explícitas
+   con !important para control total en impresión.
+══════════════════════════════════════════════════════════ */
+
+/* En pantalla: ocultar contenido solo para impresión */
+.only-print { display: none; }
+
+@media print {
+  /* Resetear tema oscuro */
+  html, body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    color-scheme: light !important;
+  }
+
+  /* Visibilidad en impresión */
+  .no-print   { display: none !important; }
+  .only-print { display: block !important; }
+
+  /* Preservar colores de fondo (cabeceras oscuras de tabla) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
