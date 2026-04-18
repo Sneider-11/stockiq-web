@@ -264,6 +264,29 @@ export async function dbGetRegistros(tiendaId?: string): Promise<Registro[]> {
   }));
 }
 
+export async function dbActualizarRegistro(
+  id: string,
+  data: {
+    cantidad:      number;
+    nota?:         string;
+    usuarioNombre: string;
+    clasificacion: import('../types').Clasificacion;
+    escaneadoEn:   string;
+  },
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('registros') as any)
+    .update({
+      cantidad:       data.cantidad,
+      nota:           data.nota ?? '',
+      usuario_nombre: data.usuarioNombre,
+      clasificacion:  data.clasificacion,
+      escaneado_en:   data.escaneadoEn,
+    })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 export async function dbDeleteRegistro(id: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('registros') as any).delete().eq('id', id);

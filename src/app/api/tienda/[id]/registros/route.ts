@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { dbReiniciarCompleto, dbInsertRegistro, dbGetCatalogo, dbGetRegistros } from '@/lib/db';
+import { dbReiniciarCompleto, dbInsertRegistro, dbActualizarRegistro, dbGetCatalogo, dbGetRegistros } from '@/lib/db';
 import type { Clasificacion } from '@/types';
 
 interface Params { params: Promise<{ id: string }> }
@@ -35,22 +35,46 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Artículo no encontrado en el catálogo.', code: 'NOT_IN_CATALOG' }, { status: 404 });
   }
 
-  // Si ya hay un registro para este itemId en esta tienda, devolverlo para que el cliente decida
+  // Verificar si ya existe un registro para este artículo en esta tienda
   const existentes = await dbGetRegistros(id);
-  const yaExiste = existentes.find(r => r.itemId === itemId);
+  const yaExiste   = existentes.find(r => r.itemId === itemId);
+  const clsf       = clasificar(articulo.stock, cantidad);
+  const ahora      = new Date().toISOString();
 
-  const registro = await dbInsertRegistro({
-    tiendaId:      id,
-    itemId:        articulo.itemId,
-    descripcion:   articulo.descripcion,
-    ubicacion:     articulo.ubicacion,
-    stockSistema:  articulo.stock,
-    costoUnitario: articulo.costo,
-    cantidad,
-    nota,
-    usuarioNombre: session.nombre,
-    clasificacion: clasificar(articulo.stock, cantidad),
-  });
+  let registro;
+
+  if (yaExiste) {
+    // Actualizar el registro existente — mismo ID, sin duplicar
+    await dbActualizarRegistro(yaExiste.id, {
+      cantidad,
+      nota,
+      usuarioNombre: session.nombre,
+      clasificacion: clsf,
+      escaneadoEn:   ahora,
+    });
+    registro = {
+      ...yaExiste,
+      cantidad,
+      nota:          nota ?? yaExiste.nota,
+      usuarioNombre: session.nombre,
+      clasificacion: clsf,
+      escaneadoEn:   ahora,
+    };
+  } else {
+    // Artículo nuevo — insertar
+    registro = await dbInsertRegistro({
+      tiendaId:      id,
+      itemId:        articulo.itemId,
+      descripcion:   articulo.descripcion,
+      ubicacion:     articulo.ubicacion,
+      stockSistema:  articulo.stock,
+      costoUnitario: articulo.costo,
+      cantidad,
+      nota,
+      usuarioNombre: session.nombre,
+      clasificacion: clsf,
+    });
+  }
 
   return NextResponse.json({ registro, yaExistia: !!yaExiste });
 }

@@ -181,7 +181,11 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
         timestamp: Date.now(),
       };
       setRecent(prev => [result, ...prev].slice(0, 30));
-      setRegistros(prev => [json.registro, ...prev]);
+      // Reemplazar por itemId para no acumular duplicados en el estado local
+      setRegistros(prev => {
+        const sinAnterior = prev.filter(r => r.itemId !== (json.registro as Registro).itemId);
+        return [json.registro as Registro, ...sinAnterior];
+      });
       triggerFlash('ok');
     } catch {
       triggerFlash('err');
@@ -447,8 +451,8 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
                     </p>
                   </div>
                   {r.yaExistia && (
-                    <span className="text-[9px] font-bold text-amber-400 bg-amber-950/40 border border-amber-800/40 px-1.5 py-0.5 rounded shrink-0">
-                      dup.
+                    <span className="text-[9px] font-bold text-sky-400 bg-sky-950/40 border border-sky-800/40 px-1.5 py-0.5 rounded shrink-0">
+                      actualizado
                     </span>
                   )}
                 </div>

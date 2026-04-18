@@ -20,7 +20,11 @@ export default async function ResultadosPage({ params }: Props) {
   const tienda = tiendas.find(t => t.id === id);
   if (!tienda) notFound();
 
-  const regMap = new Map<string, Registro>(registros.map(r => [r.itemId, r]));
+  // registros viene ordenado desc por escaneado_en — tomamos el primero por itemId (el más reciente)
+  const regMap = new Map<string, Registro>();
+  for (const r of registros) {
+    if (!regMap.has(r.itemId)) regMap.set(r.itemId, r);
+  }
 
   const rows: ResultRow[] = catalogo.map((a: Articulo) => {
     const reg        = regMap.get(a.itemId);
