@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Users, Plus, Pencil, Trash2, X, Save, Loader2,
   Shield, Store, ToggleLeft, ToggleRight, AlertCircle,
@@ -50,6 +50,44 @@ const ROL_LABEL: Record<Rol, string> = {
   CONTADOR:   'Contador',
 };
 
+const ROL_OPTIONS: {
+  value: Rol;
+  label: string;
+  sublabel: string;
+  Icon: React.ComponentType<{ size?: number; className?: string }>;
+  accent: string;
+  bg: string;
+  border: string;
+}[] = [
+  {
+    value: 'SUPERADMIN',
+    label: 'SuperAdmin',
+    sublabel: 'Acceso total a todas las tiendas y configuración',
+    Icon: Shield,
+    accent: 'text-violet-400',
+    bg:     'bg-violet-950/50',
+    border: 'border-violet-800/60',
+  },
+  {
+    value: 'ADMIN',
+    label: 'Admin',
+    sublabel: 'Gestión y escaneo en tiendas asignadas',
+    Icon: UserCheck,
+    accent: 'text-sky-400',
+    bg:     'bg-sky-950/50',
+    border: 'border-sky-800/60',
+  },
+  {
+    value: 'CONTADOR',
+    label: 'Contador',
+    sublabel: 'Solo puede escanear artículos',
+    Icon: Users,
+    accent: 'text-zinc-300',
+    bg:     'bg-zinc-800/50',
+    border: 'border-zinc-700/60',
+  },
+];
+
 export default function EquipoClient({ initialUsuarios, tiendas, grupos, sessionUser }: Props) {
   const [usuarios,       setUsuarios]       = useState<Usuario[]>(initialUsuarios);
   const [modal,          setModal]          = useState(false);
@@ -59,9 +97,21 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
   const [confirmDelete,  setConfirmDelete]  = useState<string | null>(null);
   const [error,          setError]          = useState('');
   const [search,         setSearch]         = useState('');
+  const [rolOpen,        setRolOpen]        = useState(false);
+  const rolRef = useRef<HTMLDivElement>(null);
 
   const toast = useToast();
   const isSuperAdmin = sessionUser.rol === 'SUPERADMIN';
+
+  // Close ROL dropdown on outside click
+  useEffect(() => {
+    if (!rolOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!rolRef.current?.contains(e.target as Node)) setRolOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [rolOpen]);
 
   const filtered = usuarios.filter(u =>
     u.nombre.toLowerCase().includes(search.toLowerCase()) ||
@@ -477,32 +527,78 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
                 />
               </div>
 
-              {/* Rol global */}
+              {/* Rol global — custom dropdown */}
               <div>
                 <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase tracking-wide">
                   Rol global
                 </label>
-                <div className="relative">
-                  <select
-                    value={form.rol}
-                    onChange={e => setForm(f => ({
-                      ...f,
-                      rol: e.target.value as Rol,
-                      tiendasRoles: {},
-                    }))}
-                    className="w-full appearance-none bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all input-field"
+                <div className="relative" ref={rolRef}>
+                  {/* Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setRolOpen(v => !v)}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border text-sm transition-all',
+                      'bg-zinc-800/60 border-zinc-700/60 hover:border-zinc-600 focus:outline-none',
+                      rolOpen && 'border-prp/50 ring-2 ring-prp/30',
+                    )}
                   >
-                    <option value="SUPERADMIN">SuperAdmin — acceso total</option>
-                    <option value="ADMIN">Admin — gestión de tiendas</option>
-                    <option value="CONTADOR">Contador — solo escaneo</option>
-                  </select>
-                  <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+                    {(() => {
+                      const opt = ROL_OPTIONS.find(o => o.value === form.rol)!;
+                      return (
+                        <>
+                          <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center border shrink-0', opt.bg, opt.border)}>
+                            <opt.Icon size={13} className={opt.accent} />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <span className={cn('font-semibold text-sm', opt.accent)}>{opt.label}</span>
+                            <span className="text-zinc-500 text-xs ml-2 hidden sm:inline">{opt.sublabel}</span>
+                          </div>
+                          <ChevronDown
+                            size={14}
+                            className={cn('text-zinc-500 transition-transform shrink-0', rolOpen && 'rotate-180')}
+                          />
+                        </>
+                      );
+                    })()}
+                  </button>
+
+                  {/* Dropdown panel */}
+                  {rolOpen && (
+                    <div className="absolute z-50 top-full mt-1.5 w-full rounded-xl border border-zinc-700/80 bg-zinc-900 shadow-2xl shadow-black/60 overflow-hidden">
+                      {ROL_OPTIONS.map(opt => {
+                        const selected = form.rol === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              setForm(f => ({ ...f, rol: opt.value, tiendasRoles: {} }));
+                              setRolOpen(false);
+                            }}
+                            className={cn(
+                              'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
+                              selected
+                                ? 'bg-zinc-800/70'
+                                : 'hover:bg-zinc-800/50',
+                            )}
+                          >
+                            <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center border shrink-0', opt.bg, opt.border)}>
+                              <opt.Icon size={14} className={opt.accent} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className={cn('text-sm font-semibold', opt.accent)}>{opt.label}</span>
+                                {selected && <Check size={12} className="text-emerald-400" />}
+                              </div>
+                              <p className="text-[11px] text-zinc-500 truncate">{opt.sublabel}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                <p className="text-[11px] text-zinc-500 mt-1">
-                  {form.rol === 'SUPERADMIN' && 'Acceso completo a todas las tiendas y configuración.'}
-                  {form.rol === 'ADMIN' && 'Puede escanear, ver resultados y gestionar contadores.'}
-                  {form.rol === 'CONTADOR' && 'Solo puede escanear artículos en las tiendas asignadas.'}
-                </p>
               </div>
 
               {/* Grupos asignados */}
@@ -598,18 +694,26 @@ export default function EquipoClient({ initialUsuarios, tiendas, grupos, session
                             </span>
                           </button>
 
-                          {/* Rol de tienda — solo si no es SUPERADMIN y está asignada */}
+                          {/* Rol de tienda — toggle ADMIN | CONTADOR */}
                           {assigned && !isSuperRol && (
-                            <div className="relative shrink-0">
-                              <select
-                                value={storeRol}
-                                onChange={e => setTiendaRol(t.id, e.target.value as StoreRole)}
-                                className="appearance-none text-xs bg-zinc-700/60 border border-zinc-600/60 rounded-lg px-3 py-1.5 pr-7 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-prp/50 transition-all"
-                              >
-                                <option value="ADMIN">Admin</option>
-                                <option value="CONTADOR">Contador</option>
-                              </select>
-                              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+                            <div className="flex gap-0.5 bg-zinc-800/60 rounded-lg p-0.5 shrink-0">
+                              {(['ADMIN', 'CONTADOR'] as StoreRole[]).map(r => (
+                                <button
+                                  key={r}
+                                  type="button"
+                                  onClick={() => setTiendaRol(t.id, r)}
+                                  className={cn(
+                                    'px-2.5 py-1 rounded-md text-[10px] font-bold transition-all',
+                                    storeRol === r
+                                      ? r === 'ADMIN'
+                                        ? 'bg-sky-900/70 text-sky-300 border border-sky-800/60'
+                                        : 'bg-zinc-700 text-zinc-200 shadow'
+                                      : 'text-zinc-500 hover:text-zinc-300',
+                                  )}
+                                >
+                                  {r === 'ADMIN' ? 'Admin' : 'Contador'}
+                                </button>
+                              ))}
                             </div>
                           )}
 
