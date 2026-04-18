@@ -76,91 +76,95 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
   return (
     <>
       {/* ── Vista de impresión ── */}
-      <div className="hidden print:block text-black">
-        <div className="text-center mb-6">
-          <h1 className="text-xl font-bold">Reconteo de inventario</h1>
-          {tiendaNombre && <p className="text-sm text-gray-600">{tiendaNombre}</p>}
-          <p className="text-xs text-gray-500 mt-1">{new Date().toLocaleDateString('es-CO', { dateStyle: 'full' })}</p>
+      <div className="hidden print:block text-black text-[11px]" style={{ fontFamily: 'Arial, sans-serif' }}>
+
+        {/* Encabezado */}
+        <div style={{ borderBottom: '2px solid black', paddingBottom: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '0.5px' }}>HOJA DE RECONTEO</div>
+              {tiendaNombre && <div style={{ fontSize: '12px', color: '#444', marginTop: '2px' }}>{tiendaNombre}</div>}
+            </div>
+            <div style={{ textAlign: 'right', fontSize: '10px', color: '#666' }}>
+              <div>StockIQ · Grupo Orvion Tech</div>
+              <div>{new Date().toLocaleDateString('es-CO', { dateStyle: 'full' })}</div>
+              <div>{new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+          </div>
         </div>
 
-        {faltantesImpresion.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-base font-bold border-b-2 border-black pb-1 mb-3">
-              Faltantes y ceros — {faltantesImpresion.length} artículos · Total: {formatCOP(totalFaltante)}
-            </h2>
-            <table className="w-full text-xs border-collapse">
+        {/* Tabla reutilizable */}
+        {([
+          {
+            titulo: `FALTANTES Y CEROS`,
+            subtitulo: `${faltantesImpresion.length} artículos`,
+            total: totalFaltante,
+            totalLabel: 'TOTAL FALTANTE',
+            rows: faltantesImpresion,
+            difFn: (r: ResultRow) => r.diferencia !== null ? String(r.diferencia) : '—',
+          },
+          {
+            titulo: `SOBRANTES`,
+            subtitulo: `${sobrantesImpresion.length} artículos`,
+            total: totalSobrante,
+            totalLabel: 'TOTAL SOBRANTE',
+            rows: sobrantesImpresion,
+            difFn: (r: ResultRow) => r.diferencia !== null ? `+${r.diferencia}` : '—',
+          },
+        ] as const).filter(s => s.rows.length > 0).map(seccion => (
+          <section key={seccion.titulo} style={{ marginBottom: '20px', pageBreakInside: 'avoid' }}>
+            {/* Título de sección */}
+            <div style={{
+              background: '#1a1a1a', color: 'white', padding: '4px 8px',
+              fontWeight: 'bold', fontSize: '11px', letterSpacing: '0.8px',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <span>{seccion.titulo} — {seccion.subtitulo}</span>
+              <span style={{ fontSize: '10px', fontWeight: 'normal' }}>
+                {seccion.totalLabel}: {formatCOP(seccion.total)}
+              </span>
+            </div>
+
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
               <thead>
-                <tr className="border-b border-gray-400">
-                  <th className="text-left py-1.5 pr-3 font-semibold">Código</th>
-                  <th className="text-left py-1.5 pr-3 font-semibold">Descripción</th>
-                  <th className="text-left py-1.5 pr-3 font-semibold">Ubic.</th>
-                  <th className="text-center py-1.5 pr-3 font-semibold">Sistema</th>
-                  <th className="text-center py-1.5 pr-3 font-semibold">Contado</th>
-                  <th className="text-center py-1.5 pr-3 font-semibold">Diferencia</th>
-                  <th className="text-right py-1.5 font-semibold">Valor</th>
+                <tr style={{ background: '#f0f0f0', borderBottom: '1px solid #aaa' }}>
+                  <th style={{ textAlign: 'left',   padding: '4px 6px', fontWeight: '600', width: '32%' }}>NOMBRE / DESCRIPCIÓN</th>
+                  <th style={{ textAlign: 'left',   padding: '4px 6px', fontWeight: '600', width: '14%' }}>ID / CÓDIGO</th>
+                  <th style={{ textAlign: 'left',   padding: '4px 6px', fontWeight: '600', width: '14%' }}>UBICACIÓN</th>
+                  <th style={{ textAlign: 'center', padding: '4px 6px', fontWeight: '600', width: '10%' }}>CANTIDAD</th>
+                  <th style={{ textAlign: 'center', padding: '4px 6px', fontWeight: '600', width: '10%' }}>CONTEO</th>
+                  <th style={{ textAlign: 'center', padding: '4px 6px', fontWeight: '600', width: '10%' }}>DIF.</th>
+                  <th style={{ textAlign: 'right',  padding: '4px 6px', fontWeight: '600', width: '10%' }}>VALOR</th>
                 </tr>
               </thead>
               <tbody>
-                {faltantesImpresion.map(r => (
-                  <tr key={r.itemId} className="border-b border-gray-200">
-                    <td className="py-1 pr-3 font-mono text-gray-600">{r.itemId}</td>
-                    <td className="py-1 pr-3">{r.descripcion}</td>
-                    <td className="py-1 pr-3 text-gray-500">{r.ubicacion}</td>
-                    <td className="py-1 pr-3 text-center">{r.stockSist}</td>
-                    <td className="py-1 pr-3 text-center">{r.contado ?? '—'}</td>
-                    <td className="py-1 pr-3 text-center font-bold">{r.diferencia ?? '—'}</td>
-                    <td className="py-1 text-right font-bold">{formatCOP(r.valorDif)}</td>
+                {seccion.rows.map((r, i) => (
+                  <tr key={r.itemId} style={{
+                    background: i % 2 === 0 ? '#fff' : '#f8f8f8',
+                    borderBottom: '1px solid #e0e0e0',
+                  }}>
+                    <td style={{ padding: '3px 6px', fontWeight: '500' }}>{r.descripcion}</td>
+                    <td style={{ padding: '3px 6px', fontFamily: 'monospace', color: '#555', fontSize: '9px' }}>{r.itemId}</td>
+                    <td style={{ padding: '3px 6px', color: '#444' }}>{r.ubicacion || '—'}</td>
+                    <td style={{ padding: '3px 6px', textAlign: 'center' }}>{r.stockSist}</td>
+                    <td style={{ padding: '3px 6px', textAlign: 'center', fontWeight: '600' }}>{r.contado ?? '—'}</td>
+                    <td style={{ padding: '3px 6px', textAlign: 'center', fontWeight: '700' }}>{seccion.difFn(r)}</td>
+                    <td style={{ padding: '3px 6px', textAlign: 'right', fontWeight: '600' }}>{formatCOP(r.valorDif)}</td>
                   </tr>
                 ))}
-                <tr className="border-t-2 border-black font-bold">
-                  <td colSpan={6} className="py-1.5 text-right pr-3">TOTAL FALTANTE:</td>
-                  <td className="py-1.5 text-right">{formatCOP(totalFaltante)}</td>
+                <tr style={{ background: '#e8e8e8', borderTop: '2px solid #333', fontWeight: 'bold' }}>
+                  <td colSpan={6} style={{ padding: '4px 6px', textAlign: 'right' }}>{seccion.totalLabel}:</td>
+                  <td style={{ padding: '4px 6px', textAlign: 'right' }}>{formatCOP(seccion.total)}</td>
                 </tr>
               </tbody>
             </table>
           </section>
-        )}
+        ))}
 
-        {sobrantesImpresion.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-base font-bold border-b-2 border-black pb-1 mb-3">
-              Sobrantes — {sobrantesImpresion.length} artículos · Total: {formatCOP(totalSobrante)}
-            </h2>
-            <table className="w-full text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-gray-400">
-                  <th className="text-left py-1.5 pr-3 font-semibold">Código</th>
-                  <th className="text-left py-1.5 pr-3 font-semibold">Descripción</th>
-                  <th className="text-left py-1.5 pr-3 font-semibold">Ubic.</th>
-                  <th className="text-center py-1.5 pr-3 font-semibold">Sistema</th>
-                  <th className="text-center py-1.5 pr-3 font-semibold">Contado</th>
-                  <th className="text-center py-1.5 pr-3 font-semibold">Diferencia</th>
-                  <th className="text-right py-1.5 font-semibold">Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sobrantesImpresion.map(r => (
-                  <tr key={r.itemId} className="border-b border-gray-200">
-                    <td className="py-1 pr-3 font-mono text-gray-600">{r.itemId}</td>
-                    <td className="py-1 pr-3">{r.descripcion}</td>
-                    <td className="py-1 pr-3 text-gray-500">{r.ubicacion}</td>
-                    <td className="py-1 pr-3 text-center">{r.stockSist}</td>
-                    <td className="py-1 pr-3 text-center">{r.contado ?? '—'}</td>
-                    <td className="py-1 pr-3 text-center font-bold">+{r.diferencia}</td>
-                    <td className="py-1 text-right font-bold">{formatCOP(r.valorDif)}</td>
-                  </tr>
-                ))}
-                <tr className="border-t-2 border-black font-bold">
-                  <td colSpan={6} className="py-1.5 text-right pr-3">TOTAL SOBRANTE:</td>
-                  <td className="py-1.5 text-right">{formatCOP(totalSobrante)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-        )}
-
-        <div className="text-xs text-gray-500 text-center mt-8 border-t pt-3">
-          Impreso desde StockIQ · {new Date().toLocaleString('es-CO')}
+        {/* Pie de página */}
+        <div style={{ borderTop: '1px solid #ccc', paddingTop: '6px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', color: '#888', fontSize: '9px' }}>
+          <span>StockIQ — Grupo Orvion Tech · stockiq-web.vercel.app</span>
+          <span>Impreso el {new Date().toLocaleString('es-CO')}</span>
         </div>
       </div>
 
