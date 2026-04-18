@@ -55,10 +55,10 @@ export function ReiniciarBtn({ tiendaId, tiendaNombre }: Props) {
             </div>
 
             <p className="text-sm text-zinc-300 mb-2">
-              Esto eliminará <span className="font-bold text-red-400">todos los registros de conteo</span> de esta tienda.
+              Esto eliminará <span className="font-bold text-red-400">todos los registros, sobrantes y el catálogo de artículos</span> de esta tienda.
             </p>
             <p className="text-xs text-zinc-500 mb-5">
-              El catálogo de artículos no se verá afectado. Esta acción no se puede deshacer.
+              La tienda quedará completamente vacía, lista para un nuevo cargue de Excel. Esta acción no se puede deshacer.
             </p>
 
             {error && (

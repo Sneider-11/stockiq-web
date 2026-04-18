@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { dbLimpiarRegistrosTienda, dbInsertRegistro, dbGetCatalogo, dbGetRegistros } from '@/lib/db';
+import { dbReiniciarCompleto, dbInsertRegistro, dbGetCatalogo, dbGetRegistros } from '@/lib/db';
 import type { Clasificacion } from '@/types';
 
 interface Params { params: Promise<{ id: string }> }
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   return NextResponse.json({ registro, yaExistia: !!yaExiste });
 }
 
-// DELETE /api/tienda/[id]/registros — limpiar TODOS los registros de una tienda
+// DELETE /api/tienda/[id]/registros — reinicio completo: registros + sobrantes + catálogo
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'No autorizado.' }, { status: 401 });
@@ -66,7 +66,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   }
 
   try {
-    await dbLimpiarRegistrosTienda(id);
+    await dbReiniciarCompleto(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[DELETE /api/tienda/[id]/registros]', err);

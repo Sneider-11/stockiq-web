@@ -274,6 +274,17 @@ export async function dbLimpiarRegistrosTienda(tiendaId: string): Promise<void> 
   await (supabase.from('registros') as any).delete().eq('tienda_id', tiendaId);
 }
 
+export async function dbReiniciarCompleto(tiendaId: string): Promise<void> {
+  await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.from('registros') as any).delete().eq('tienda_id', tiendaId),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.from('sobrantes') as any).delete().eq('tienda_id', tiendaId),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.from('catalogos') as any).delete().eq('tienda_id', tiendaId),
+  ]);
+}
+
 export async function dbInsertRegistro(data: {
   tiendaId:      string;
   itemId:        string;
