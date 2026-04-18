@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, X, Minus, Package, Printer, RefreshCw } from 'lucide-react';
+import { Search, X, Minus, Package, Printer, RefreshCw, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { formatCOP } from '@/lib/utils';
@@ -19,6 +19,8 @@ export interface ResultRow {
   costo:       number;
   valorDif:    number;
   clsf:        ClsfType;
+  registroId?: string;
+  nota?:       string;
 }
 
 const FILTROS = [
@@ -30,7 +32,12 @@ const FILTROS = [
   { value: 'NO_CONTADO', label: 'Pendiente' },
 ];
 
-interface Props { rows: ResultRow[]; tiendaNombre?: string }
+interface Props {
+  rows:          ResultRow[];
+  tiendaNombre?: string;
+  tiendaId?:     string;
+  canEdit?:      boolean;
+}
 
 function buildPrintHTML(rows: ResultRow[], label: string, tiendaNombre: string | undefined, search: string): string {
   const fecha   = new Date().toLocaleDateString('es-CO', { dateStyle: 'full' });
@@ -110,7 +117,7 @@ function buildPrintHTML(rows: ResultRow[], label: string, tiendaNombre: string |
 </html>`;
 }
 
-export default function ResultadosClient({ rows, tiendaNombre }: Props) {
+export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit }: Props) {
   const router       = useRouter();
   const searchParams = useSearchParams();
 
@@ -118,6 +125,52 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
   const [filtro,     setFiltro]     = useState(() => searchParams.get('clf') ?? '');
   const [lastSync,   setLastSync]   = useState<Date>(new Date());
   const [refreshing, setRefreshing] = useState(false);
+
+  // ── Estado del modal de edición ──────────────────────────────────────────────
+  const [editingRow,   setEditingRow]   = useState<ResultRow | null>(null);
+  const [editCantidad, setEditCantidad] = useState('');
+  const [editNota,     setEditNota]     = useState('');
+  const [saving,       setSaving]       = useState(false);
+  const [editError,    setEditError]    = useState('');
+
+  const abrirEdit = useCallback((r: ResultRow) => {
+    setEditingRow(r);
+    setEditCantidad(r.contado !== null ? String(r.contado) : '');
+    setEditNota(r.nota ?? '');
+    setEditError('');
+  }, []);
+
+  const cerrarEdit = useCallback(() => {
+    if (saving) return;
+    setEditingRow(null);
+    setEditError('');
+  }, [saving]);
+
+  const handleGuardar = useCallback(async () => {
+    if (!editingRow?.registroId || !tiendaId) return;
+    const cant = parseInt(editCantidad, 10);
+    if (isNaN(cant) || cant < 0) { setEditError('Ingresa una cantidad válida (0 o más).'); return; }
+    setSaving(true);
+    setEditError('');
+    try {
+      const res = await fetch(`/api/tienda/${tiendaId}/registros/${editingRow.registroId}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ cantidad: cant, nota: editNota.trim(), stockSistema: editingRow.stockSist }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setEditError(d.error ?? 'Error al guardar.');
+        return;
+      }
+      setEditingRow(null);
+      router.refresh();
+    } catch {
+      setEditError('Error de red. Intenta de nuevo.');
+    } finally {
+      setSaving(false);
+    }
+  }, [editingRow, editCantidad, editNota, tiendaId, router]);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -168,6 +221,66 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
 
   return (
     <>
+      {/* ── Modal de edición ── */}
+      {editingRow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={cerrarEdit} />
+          <div className="relative w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl p-6">
+            <h2 className="text-base font-black text-zinc-100 mb-1">Editar conteo</h2>
+            <p className="text-xs text-zinc-500 mb-5 truncate">{editingRow.descripcion}</p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
+                  Cantidad contada <span className="text-zinc-600">(Sistema: {editingRow.stockSist})</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={editCantidad}
+                  onChange={e => { setEditCantidad(e.target.value); setEditError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleGuardar()}
+                  autoFocus
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 font-mono focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Nota (opcional)</label>
+                <textarea
+                  rows={2}
+                  value={editNota}
+                  onChange={e => setEditNota(e.target.value)}
+                  placeholder="Observación sobre esta diferencia…"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all resize-none"
+                />
+              </div>
+            </div>
+
+            {editError && (
+              <p className="mt-3 text-xs text-red-400 font-semibold">{editError}</p>
+            )}
+
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={cerrarEdit}
+                disabled={saving}
+                className="flex-1 h-10 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold hover:text-zinc-200 hover:border-zinc-600 transition-all disabled:opacity-40"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleGuardar}
+                disabled={saving}
+                className="flex-1 h-10 rounded-xl bg-prp/20 border border-prp/40 text-vlt text-sm font-bold hover:bg-prp/30 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {saving ? <RefreshCw size={13} className="animate-spin" /> : null}
+                {saving ? 'Guardando…' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Filtros ── */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1">
@@ -250,6 +363,7 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
                   <th className="text-center px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Dif.</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide hidden lg:table-cell">Costo</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Estado</th>
+                  {canEdit && <th className="px-2 py-3" />}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/40">
@@ -280,6 +394,21 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
                       {r.clsf === 'CERO'       && <Badge variant="warning">Cero</Badge>}
                       {r.clsf === 'NO_CONTADO' && <Badge>Pendiente</Badge>}
                     </td>
+                    {canEdit && (
+                      <td className="px-2 py-3 text-center">
+                        {r.registroId ? (
+                          <button
+                            onClick={() => abrirEdit(r)}
+                            title="Editar conteo"
+                            className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        ) : (
+                          <span className="text-zinc-700 text-xs">—</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { dbGetTiendas, dbGetRegistros, dbGetCatalogo } from '@/lib/db';
+import { getSession } from '@/lib/auth';
 import { formatCOP } from '@/lib/utils';
 import { ArrowLeft, Package, TrendingDown, TrendingUp, AlertTriangle, ChevronRight, Home } from 'lucide-react';
 import type { Registro, Articulo } from '@/types';
@@ -12,13 +13,17 @@ interface Props { params: Promise<{ id: string }> }
 
 export default async function ResultadosPage({ params }: Props) {
   const { id } = await params;
-  const [tiendas, registros, catalogo] = await Promise.all([
+  const [tiendas, registros, catalogo, session] = await Promise.all([
     dbGetTiendas(),
     dbGetRegistros(id),
     dbGetCatalogo(id),
+    getSession(),
   ]);
   const tienda = tiendas.find(t => t.id === id);
   if (!tienda) notFound();
+
+  const canEdit = !!session && ['SUPERADMIN', 'ADMIN'].includes(session.rol) &&
+    (session.rol === 'SUPERADMIN' || session.tiendas.includes(id));
 
   // registros viene ordenado desc por escaneado_en — tomamos el primero por itemId (el más reciente)
   const regMap = new Map<string, Registro>();
@@ -33,7 +38,8 @@ export default async function ResultadosPage({ params }: Props) {
     const valorDif   = diferencia !== null ? Math.abs(diferencia) * a.costo : 0;
     const clsf: ClsfType = reg ? (reg.clasificacion as ClsfType) : 'NO_CONTADO';
     return { itemId: a.itemId, descripcion: a.descripcion, ubicacion: a.ubicacion,
-             stockSist: a.stock, contado, diferencia, costo: a.costo, valorDif, clsf };
+             stockSist: a.stock, contado, diferencia, costo: a.costo, valorDif, clsf,
+             registroId: reg?.id, nota: reg?.nota };
   });
 
   rows.sort((a, b) => {
@@ -111,7 +117,7 @@ export default async function ResultadosPage({ params }: Props) {
           </Link>
         </div>
       ) : (
-        <ResultadosClient rows={rows} tiendaNombre={tienda.nombre} />
+        <ResultadosClient rows={rows} tiendaNombre={tienda.nombre} tiendaId={id} canEdit={canEdit} />
       )}
     </div>
   );
