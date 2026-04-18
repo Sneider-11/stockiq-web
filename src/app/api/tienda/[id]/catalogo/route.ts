@@ -9,9 +9,12 @@ export async function POST(req: NextRequest, { params }: Params) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: 'No autorizado.' }, { status: 401 });
   if (user.rol === 'CONTADOR') return NextResponse.json({ error: 'Sin permisos.' }, { status: 403 });
+  const { id } = await params;
+  if (user.rol !== 'SUPERADMIN' && !user.tiendas.includes(id)) {
+    return NextResponse.json({ error: 'Sin permisos para esta tienda.' }, { status: 403 });
+  }
 
   try {
-    const { id } = await params;
     const { articulos } = await req.json() as { articulos?: Articulo[] };
 
     if (!Array.isArray(articulos) || articulos.length === 0) {
