@@ -107,7 +107,7 @@ export default async function ResultadosPage({ params }: Props) {
           </Link>
         </div>
       ) : (
-        <ResultadosClient rows={rows} />
+        <ResultadosClient rows={rows} tiendaNombre={tienda.nombre} />
       )}
     </div>
   );

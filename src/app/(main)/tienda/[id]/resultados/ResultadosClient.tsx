@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, X, Minus, Package } from 'lucide-react';
+import { Search, X, Minus, Package, Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { formatCOP } from '@/lib/utils';
@@ -30,9 +30,9 @@ const FILTROS = [
   { value: 'NO_CONTADO', label: 'Pendiente' },
 ];
 
-interface Props { rows: ResultRow[] }
+interface Props { rows: ResultRow[]; tiendaNombre?: string }
 
-export default function ResultadosClient({ rows }: Props) {
+export default function ResultadosClient({ rows, tiendaNombre }: Props) {
   const router       = useRouter();
   const searchParams = useSearchParams();
 
@@ -62,10 +62,110 @@ export default function ResultadosClient({ rows }: Props) {
     return matchSearch && matchFiltro;
   });
 
+  const faltantesImpresion = rows
+    .filter(r => r.clsf === 'FALTANTE' || r.clsf === 'CERO')
+    .sort((a, b) => b.valorDif - a.valorDif);
+
+  const sobrantesImpresion = rows
+    .filter(r => r.clsf === 'SOBRANTE')
+    .sort((a, b) => b.valorDif - a.valorDif);
+
+  const totalFaltante = faltantesImpresion.reduce((s, r) => s + r.valorDif, 0);
+  const totalSobrante = sobrantesImpresion.reduce((s, r) => s + r.valorDif, 0);
+
   return (
     <>
-      {/* ── Filtros ── */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+      {/* ── Vista de impresión ── */}
+      <div className="hidden print:block text-black">
+        <div className="text-center mb-6">
+          <h1 className="text-xl font-bold">Reconteo de inventario</h1>
+          {tiendaNombre && <p className="text-sm text-gray-600">{tiendaNombre}</p>}
+          <p className="text-xs text-gray-500 mt-1">{new Date().toLocaleDateString('es-CO', { dateStyle: 'full' })}</p>
+        </div>
+
+        {faltantesImpresion.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-base font-bold border-b-2 border-black pb-1 mb-3">
+              Faltantes y ceros — {faltantesImpresion.length} artículos · Total: {formatCOP(totalFaltante)}
+            </h2>
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-gray-400">
+                  <th className="text-left py-1.5 pr-3 font-semibold">Código</th>
+                  <th className="text-left py-1.5 pr-3 font-semibold">Descripción</th>
+                  <th className="text-left py-1.5 pr-3 font-semibold">Ubic.</th>
+                  <th className="text-center py-1.5 pr-3 font-semibold">Sistema</th>
+                  <th className="text-center py-1.5 pr-3 font-semibold">Contado</th>
+                  <th className="text-center py-1.5 pr-3 font-semibold">Diferencia</th>
+                  <th className="text-right py-1.5 font-semibold">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {faltantesImpresion.map(r => (
+                  <tr key={r.itemId} className="border-b border-gray-200">
+                    <td className="py-1 pr-3 font-mono text-gray-600">{r.itemId}</td>
+                    <td className="py-1 pr-3">{r.descripcion}</td>
+                    <td className="py-1 pr-3 text-gray-500">{r.ubicacion}</td>
+                    <td className="py-1 pr-3 text-center">{r.stockSist}</td>
+                    <td className="py-1 pr-3 text-center">{r.contado ?? '—'}</td>
+                    <td className="py-1 pr-3 text-center font-bold">{r.diferencia ?? '—'}</td>
+                    <td className="py-1 text-right font-bold">{formatCOP(r.valorDif)}</td>
+                  </tr>
+                ))}
+                <tr className="border-t-2 border-black font-bold">
+                  <td colSpan={6} className="py-1.5 text-right pr-3">TOTAL FALTANTE:</td>
+                  <td className="py-1.5 text-right">{formatCOP(totalFaltante)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        {sobrantesImpresion.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-base font-bold border-b-2 border-black pb-1 mb-3">
+              Sobrantes — {sobrantesImpresion.length} artículos · Total: {formatCOP(totalSobrante)}
+            </h2>
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-gray-400">
+                  <th className="text-left py-1.5 pr-3 font-semibold">Código</th>
+                  <th className="text-left py-1.5 pr-3 font-semibold">Descripción</th>
+                  <th className="text-left py-1.5 pr-3 font-semibold">Ubic.</th>
+                  <th className="text-center py-1.5 pr-3 font-semibold">Sistema</th>
+                  <th className="text-center py-1.5 pr-3 font-semibold">Contado</th>
+                  <th className="text-center py-1.5 pr-3 font-semibold">Diferencia</th>
+                  <th className="text-right py-1.5 font-semibold">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sobrantesImpresion.map(r => (
+                  <tr key={r.itemId} className="border-b border-gray-200">
+                    <td className="py-1 pr-3 font-mono text-gray-600">{r.itemId}</td>
+                    <td className="py-1 pr-3">{r.descripcion}</td>
+                    <td className="py-1 pr-3 text-gray-500">{r.ubicacion}</td>
+                    <td className="py-1 pr-3 text-center">{r.stockSist}</td>
+                    <td className="py-1 pr-3 text-center">{r.contado ?? '—'}</td>
+                    <td className="py-1 pr-3 text-center font-bold">+{r.diferencia}</td>
+                    <td className="py-1 text-right font-bold">{formatCOP(r.valorDif)}</td>
+                  </tr>
+                ))}
+                <tr className="border-t-2 border-black font-bold">
+                  <td colSpan={6} className="py-1.5 text-right pr-3">TOTAL SOBRANTE:</td>
+                  <td className="py-1.5 text-right">{formatCOP(totalSobrante)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        <div className="text-xs text-gray-500 text-center mt-8 border-t pt-3">
+          Impreso desde StockIQ · {new Date().toLocaleString('es-CO')}
+        </div>
+      </div>
+
+      {/* ── Filtros (pantalla) ── */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-5 print:hidden">
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
           <input
@@ -99,12 +199,23 @@ export default function ResultadosClient({ rows }: Props) {
         </div>
       </div>
 
-      <p className="text-xs text-zinc-500 mb-3">
-        {filtered.length} de {rows.length} artículos
-        {(search || filtro) && ' (filtrado)'}
-      </p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs text-zinc-500">
+          {filtered.length} de {rows.length} artículos
+          {(search || filtro) && ' (filtrado)'}
+        </p>
+        <button
+          onClick={() => window.print()}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 text-xs font-semibold transition-all"
+          title="Imprimir faltantes y sobrantes para reconteo"
+        >
+          <Printer size={13} />
+          Imprimir reconteo
+        </button>
+      </div>
 
       {/* ── Tabla ── */}
+      <div className="print:hidden">
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-zinc-600">
           <Package size={40} className="mb-3 opacity-30" />
@@ -160,6 +271,7 @@ export default function ResultadosClient({ rows }: Props) {
           </div>
         </div>
       )}
+      </div>
     </>
   );
 }

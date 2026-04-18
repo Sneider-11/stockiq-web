@@ -242,14 +242,6 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
               )}
             </div>
 
-            {barcode.trim() && (
-              <button
-                onClick={e => { e.stopPropagation(); handleBarcodeSubmit(); }}
-                className="w-full py-2.5 rounded-xl bg-prp/20 border border-prp/30 text-vlt text-sm font-bold hover:bg-prp/30 transition-all"
-              >
-                Buscar artículo
-              </button>
-            )}
           </div>
         )}
 
