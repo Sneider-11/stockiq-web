@@ -274,6 +274,54 @@ export async function dbLimpiarRegistrosTienda(tiendaId: string): Promise<void> 
   await (supabase.from('registros') as any).delete().eq('tienda_id', tiendaId);
 }
 
+export async function dbInsertRegistro(data: {
+  tiendaId:      string;
+  itemId:        string;
+  descripcion:   string;
+  ubicacion:     string;
+  stockSistema:  number;
+  costoUnitario: number;
+  cantidad:      number;
+  nota?:         string;
+  usuarioNombre: string;
+  clasificacion: import('../types').Clasificacion;
+}): Promise<Registro> {
+  const id          = crypto.randomUUID();
+  const escaneadoEn = new Date().toISOString();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('registros') as any).insert({
+    id,
+    tienda_id:      data.tiendaId,
+    item_id:        data.itemId,
+    descripcion:    data.descripcion,
+    ubicacion:      data.ubicacion,
+    stock_sistema:  data.stockSistema,
+    costo_unitario: data.costoUnitario,
+    cantidad:       data.cantidad,
+    nota:           data.nota ?? '',
+    foto_uri:       null,
+    usuario_nombre: data.usuarioNombre,
+    escaneado_en:   escaneadoEn,
+    clasificacion:  data.clasificacion,
+  });
+  if (error) throw new Error(error.message);
+  return {
+    id,
+    tiendaId:      data.tiendaId,
+    itemId:        data.itemId,
+    descripcion:   data.descripcion,
+    ubicacion:     data.ubicacion,
+    stockSistema:  data.stockSistema,
+    costoUnitario: data.costoUnitario,
+    cantidad:      data.cantidad,
+    nota:          data.nota ?? '',
+    fotoUri:       null,
+    usuarioNombre: data.usuarioNombre,
+    escaneadoEn,
+    clasificacion: data.clasificacion,
+  };
+}
+
 // ─── CATÁLOGOS ────────────────────────────────────────────────────────────────
 
 export async function dbGetCatalogo(tiendaId: string): Promise<Articulo[]> {

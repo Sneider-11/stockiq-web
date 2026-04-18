@@ -9,7 +9,7 @@ import { DescargarTiendaBtn } from '@/components/ui/DescargarTiendaBtn';
 import {
   ArrowLeft, Boxes, TrendingDown, TrendingUp,
   CheckCircle2, BarChart2, Upload, ClipboardList,
-  AlertTriangle, ScanLine, Hash, ChevronRight, FileText, Home, History,
+  AlertTriangle, ScanLine, Hash, ChevronRight, FileText, Home, History, Scan,
 } from 'lucide-react';
 import type { Registro } from '@/types';
 
@@ -58,6 +58,14 @@ export default async function TiendaPage({ params }: Props) {
   // Cada acción tiene su propio color visible independiente del color de la tienda.
   // Se usa el color de la tienda SÓLO como acento secundario (borde/sombra).
   const quickLinks = [
+    {
+      href:    `/tienda/${id}/scanner`,
+      label:   'Escáner Web',
+      icon:    <Scan size={18} />,
+      desc:    'Pistola lectora / teclado',
+      iconBg:  '#0F766E',          // teal-700
+      iconGlow:'rgba(15,118,110,0.35)',
+    },
     {
       href:    `/tienda/${id}/resultados`,
       label:   'Resultados',

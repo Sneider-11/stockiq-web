@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
   FileText, BarChart3, DollarSign, Users,
   TrendingDown, TrendingUp, AlertTriangle, CheckCircle2,
-  Shield, Printer, Activity, Target, Minus,
+  Shield, Printer, Activity, Target, Minus, ClipboardSignature, Plus, Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCOP } from '@/lib/utils';
@@ -98,18 +98,24 @@ interface AuditorStats {
 interface Props {
   tiendaNombre:    string;
   tiendaColor:     string;
+  tiendaNit?:      string;
   registros:       Registro[];
   sobrantes:       SobranteSinStock[];
   totalCatalogo:   number;
   valorInventario: number;
 }
 
-type Tab = 'resumen' | 'economico' | 'equipo' | 'conclusiones';
+type Tab = 'resumen' | 'economico' | 'equipo' | 'conclusiones' | 'acta';
 
 export default function ReporteClient({
-  tiendaNombre, tiendaColor, registros, sobrantes, totalCatalogo, valorInventario,
+  tiendaNombre, tiendaColor, tiendaNit, registros, sobrantes, totalCatalogo, valorInventario,
 }: Props) {
   const [tab, setTab] = useState<Tab>('resumen');
+  // Firmantes editables antes de imprimir
+  const [firmantes, setFirmantes] = useState<string[]>(['', '', '']);
+  const addFirmante = () => setFirmantes(p => [...p, '']);
+  const removeFirmante = (i: number) => setFirmantes(p => p.filter((_, idx) => idx !== i));
+  const setFirmante = (i: number, v: string) => setFirmantes(p => p.map((f, idx) => idx === i ? v : f));
 
   // ── Cálculos ─────────────────────────────────────────────────────────────────
   const faltantesArr  = registros.filter(r => r.clasificacion === 'FALTANTE');
@@ -165,10 +171,11 @@ export default function ReporteClient({
   const barColor  = pct >= 80 ? '#10B981' : pct >= 40 ? '#F59E0B' : '#EF4444';
 
   const TABS = [
-    { id: 'resumen'      as const, label: 'Resumen',      icon: <BarChart3    size={14} /> },
-    { id: 'economico'    as const, label: 'Económico',    icon: <DollarSign   size={14} /> },
-    { id: 'equipo'       as const, label: 'Equipo',       icon: <Users        size={14} /> },
-    { id: 'conclusiones' as const, label: 'Conclusiones', icon: <FileText     size={14} /> },
+    { id: 'resumen'      as const, label: 'Resumen',      icon: <BarChart3          size={14} /> },
+    { id: 'economico'    as const, label: 'Económico',    icon: <DollarSign         size={14} /> },
+    { id: 'equipo'       as const, label: 'Equipo',       icon: <Users              size={14} /> },
+    { id: 'conclusiones' as const, label: 'Conclusiones', icon: <FileText           size={14} /> },
+    { id: 'acta'         as const, label: 'Acta',         icon: <ClipboardSignature size={14} /> },
   ];
 
   return (
@@ -573,6 +580,299 @@ export default function ReporteClient({
             <p className="text-xs text-zinc-600">
               {new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════
+          TAB: ACTA DE INVENTARIO (imprimible)
+      ══════════════════════════════════════ */}
+      {tab === 'acta' && (
+        <div className="space-y-6">
+
+          {/* ── Instrucción de impresión (solo pantalla) ── */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-800/40 border border-zinc-700/40 print:hidden">
+            <div>
+              <p className="text-sm font-bold text-zinc-200">Acta de Inventario Físico</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Agrega los nombres de los participantes · luego imprime o guarda como PDF
+              </p>
+            </div>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-prp/20 border border-prp/30 text-vlt text-sm font-semibold hover:bg-prp/30 transition-all shrink-0"
+            >
+              <Printer size={14} />
+              Imprimir acta
+            </button>
+          </div>
+
+          {/* ══ CONTENIDO DEL ACTA (imprimible) ══ */}
+          <div className="acta-print space-y-6 print:space-y-8">
+
+            {/* ── Encabezado del acta ── */}
+            <div className="border-b-2 border-zinc-700 pb-5 print:border-zinc-400">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold print:text-zinc-600">
+                    Grupo Orvion Tech · StockIQ
+                  </p>
+                  <h2 className="text-2xl font-black text-zinc-100 mt-1 print:text-black">
+                    ACTA DE INVENTARIO FÍSICO
+                  </h2>
+                  <p className="text-sm text-zinc-400 mt-1 print:text-zinc-700">
+                    {tiendaNombre}{tiendaNit ? ` · NIT ${tiendaNit}` : ''}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-zinc-500 print:text-zinc-600">Fecha de emisión</p>
+                  <p className="text-sm font-bold text-zinc-300 print:text-black">
+                    {new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 mt-2 print:text-zinc-600">Progreso del conteo</p>
+                  <p className={cn('text-lg font-black', pct >= 80 ? 'text-emerald-400' : pct >= 40 ? 'text-amber-400' : 'text-red-400', 'print:text-black')}>
+                    {Math.round(pct)}% ({registros.length}/{totalCatalogo})
+                  </p>
+                </div>
+              </div>
+
+              {/* Resumen ejecutivo 4 cols */}
+              <div className="grid grid-cols-4 gap-3 mt-5">
+                {[
+                  { label: 'Sin diferencia', value: sinDifArr.length,    note: `${Math.round(sinDifArr.length/Math.max(registros.length,1)*100)}% del conteo` },
+                  { label: 'Faltantes',      value: faltantesArr.length, note: formatCOP(valorFaltante), red: true },
+                  { label: 'Sobrantes',      value: sobrantesArr.length, note: formatCOP(valorSobrante), green: true },
+                  { label: 'Balance neto',   value: formatCOP(Math.abs(balance)), note: balance >= 0 ? 'Superávit' : 'Déficit', red: balance < 0, green: balance >= 0 },
+                ].map((s, i) => (
+                  <div key={i} className="rounded-xl bg-zinc-800/30 border border-zinc-700/40 p-3 text-center print:border-zinc-300 print:bg-gray-50">
+                    <p className={cn('text-xl font-black', s.red ? 'text-red-400' : s.green ? 'text-emerald-400' : 'text-zinc-100', 'print:text-black')}>
+                      {s.value}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wide mt-0.5 print:text-zinc-600">{s.label}</p>
+                    <p className={cn('text-[10px] mt-0.5', s.red ? 'text-red-400' : s.green ? 'text-emerald-400' : 'text-zinc-500', 'print:text-zinc-600')}>
+                      {s.note}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Tabla faltantes ── */}
+            {faltantesArr.length > 0 && (
+              <div>
+                <h3 className="text-xs font-black text-red-400 uppercase tracking-widest mb-3 flex items-center gap-2 print:text-red-700">
+                  <TrendingDown size={13} />
+                  Artículos Faltantes ({faltantesArr.length})
+                </h3>
+                <div className="rounded-xl border border-zinc-800/60 overflow-hidden print:border-zinc-300">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-red-950/30 border-b border-zinc-800/60 print:bg-red-50 print:border-zinc-300">
+                        <th className="text-left px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">#</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Código</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Descripción</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide hidden sm:table-cell print:table-cell print:text-zinc-700">Ubic.</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Sist.</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Ctdo.</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Dif.</th>
+                        <th className="text-right px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/40 print:divide-zinc-200">
+                      {faltantesArr
+                        .map(r => ({ ...r, valor: Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario }))
+                        .sort((a, b) => b.valor - a.valor)
+                        .map((r, i) => (
+                          <tr key={r.id} className="hover:bg-zinc-900/30 print:hover:bg-transparent">
+                            <td className="px-3 py-2 text-zinc-600 font-mono">{i + 1}</td>
+                            <td className="px-3 py-2 text-zinc-400 font-mono">{r.itemId}</td>
+                            <td className="px-3 py-2 text-zinc-200 print:text-black max-w-[180px]">
+                              <span className="line-clamp-1">{r.descripcion}</span>
+                            </td>
+                            <td className="px-3 py-2 text-zinc-500 hidden sm:table-cell print:table-cell">{r.ubicacion || '—'}</td>
+                            <td className="px-3 py-2 text-center font-mono text-zinc-300 print:text-black">{r.stockSistema}</td>
+                            <td className="px-3 py-2 text-center font-mono text-zinc-300 print:text-black">{r.cantidad}</td>
+                            <td className="px-3 py-2 text-center font-bold text-red-400 font-mono print:text-red-700">{r.cantidad - r.stockSistema}</td>
+                            <td className="px-3 py-2 text-right font-bold text-red-400 print:text-red-700">{formatCOP(r.valor)}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-zinc-900/60 border-t border-zinc-800/60 print:bg-gray-50 print:border-zinc-300">
+                        <td colSpan={7} className="px-3 py-2.5 text-xs font-bold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Total faltantes</td>
+                        <td className="px-3 py-2.5 text-right font-black text-red-400 print:text-red-700">{formatCOP(valorFaltante)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* ── Tabla sobrantes (registros) ── */}
+            {sobrantesArr.length > 0 && (
+              <div>
+                <h3 className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2 print:text-emerald-700">
+                  <TrendingUp size={13} />
+                  Artículos Sobrantes en Conteo ({sobrantesArr.length})
+                </h3>
+                <div className="rounded-xl border border-zinc-800/60 overflow-hidden print:border-zinc-300">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-emerald-950/30 border-b border-zinc-800/60 print:bg-green-50 print:border-zinc-300">
+                        <th className="text-left px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">#</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Código</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Descripción</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Sist.</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Ctdo.</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Dif.</th>
+                        <th className="text-right px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/40 print:divide-zinc-200">
+                      {sobrantesArr
+                        .map(r => ({ ...r, valor: Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario }))
+                        .sort((a, b) => b.valor - a.valor)
+                        .map((r, i) => (
+                          <tr key={r.id} className="hover:bg-zinc-900/30 print:hover:bg-transparent">
+                            <td className="px-3 py-2 text-zinc-600 font-mono">{i + 1}</td>
+                            <td className="px-3 py-2 text-zinc-400 font-mono">{r.itemId}</td>
+                            <td className="px-3 py-2 text-zinc-200 print:text-black max-w-[200px]">
+                              <span className="line-clamp-1">{r.descripcion}</span>
+                            </td>
+                            <td className="px-3 py-2 text-center font-mono text-zinc-300 print:text-black">{r.stockSistema}</td>
+                            <td className="px-3 py-2 text-center font-mono text-zinc-300 print:text-black">{r.cantidad}</td>
+                            <td className="px-3 py-2 text-center font-bold text-emerald-400 font-mono print:text-emerald-700">+{r.cantidad - r.stockSistema}</td>
+                            <td className="px-3 py-2 text-right font-bold text-emerald-400 print:text-emerald-700">{formatCOP(r.valor)}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-zinc-900/60 border-t border-zinc-800/60 print:bg-gray-50 print:border-zinc-300">
+                        <td colSpan={6} className="px-3 py-2.5 text-xs font-bold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Total sobrantes</td>
+                        <td className="px-3 py-2.5 text-right font-black text-emerald-400 print:text-emerald-700">{formatCOP(valorSobrante)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* ── Sobrantes sin stock ── */}
+            {sobrantes.length > 0 && (
+              <div>
+                <h3 className="text-xs font-black text-amber-400 uppercase tracking-widest mb-3 flex items-center gap-2 print:text-amber-700">
+                  <AlertTriangle size={13} />
+                  Sobrantes Sin Stock en Sistema ({sobrantes.length})
+                </h3>
+                <div className="rounded-xl border border-zinc-800/60 overflow-hidden print:border-zinc-300">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-amber-950/30 border-b border-zinc-800/60 print:bg-amber-50 print:border-zinc-300">
+                        <th className="text-left px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Código</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Descripción</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Cant.</th>
+                        <th className="text-right px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Precio u.</th>
+                        <th className="text-right px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Total</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-zinc-400 uppercase tracking-wide print:text-zinc-700">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/40 print:divide-zinc-200">
+                      {sobrantes.map(s => (
+                        <tr key={s.id} className="hover:bg-zinc-900/30 print:hover:bg-transparent">
+                          <td className="px-3 py-2 text-zinc-400 font-mono">{s.codigo || '—'}</td>
+                          <td className="px-3 py-2 text-zinc-200 print:text-black max-w-[200px]">
+                            <span className="line-clamp-1">{s.descripcion}</span>
+                          </td>
+                          <td className="px-3 py-2 text-center font-bold text-zinc-200 print:text-black">{s.cantidad}</td>
+                          <td className="px-3 py-2 text-right text-zinc-400 print:text-zinc-700">{formatCOP(s.precio)}</td>
+                          <td className="px-3 py-2 text-right font-bold text-amber-400 print:text-amber-700">{formatCOP(s.precio * s.cantidad)}</td>
+                          <td className="px-3 py-2 text-center">
+                            <span className={cn(
+                              'px-1.5 py-0.5 rounded text-[9px] font-bold',
+                              s.estado === 'CONFIRMADO'
+                                ? 'bg-emerald-950/60 text-emerald-400 print:text-emerald-700'
+                                : 'bg-amber-950/60 text-amber-400 print:text-amber-700',
+                            )}>
+                              {s.estado === 'CONFIRMADO' ? 'Confirmado' : 'Pendiente'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* ── Declaración ── */}
+            <div className="rounded-xl border border-zinc-700/40 bg-zinc-900/30 p-5 print:border-zinc-300 print:bg-gray-50">
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 print:text-zinc-700">
+                Declaración de conformidad
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed print:text-zinc-700">
+                Los abajo firmantes, en calidad de representantes de la empresa auditada y del equipo auditor,
+                certificamos que el presente inventario físico fue realizado en la fecha indicada y que los
+                resultados consignados en este documento reflejan fielmente las cantidades contadas de manera
+                física. Con nuestra firma damos conformidad al resultado del inventario y nos comprometemos
+                a gestionar las diferencias encontradas de acuerdo con los procedimientos internos establecidos.
+              </p>
+            </div>
+
+            {/* ── Sección de firmas ── */}
+            <div>
+              <div className="flex items-center justify-between mb-4 print:hidden">
+                <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest">
+                  Firmas de los participantes
+                </h3>
+                <button
+                  onClick={addFirmante}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800/60 border border-zinc-700/60 text-zinc-400 text-xs font-semibold hover:text-zinc-200 hover:border-zinc-600 transition-all"
+                >
+                  <Plus size={12} />
+                  Agregar firmante
+                </button>
+              </div>
+              <h3 className="hidden print:block text-xs font-black text-zinc-700 uppercase tracking-widest mb-4">
+                Firmas de los participantes
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 print:grid-cols-2 print:gap-8">
+                {firmantes.map((nombre, i) => (
+                  <div key={i} className="space-y-2">
+                    {/* Nombre editable (solo pantalla) */}
+                    <div className="flex items-center gap-2 print:hidden">
+                      <input
+                        type="text"
+                        value={nombre}
+                        onChange={e => setFirmante(i, e.target.value)}
+                        placeholder={`Nombre del firmante ${i + 1}`}
+                        className="flex-1 bg-zinc-800/40 border border-zinc-700/40 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-prp/40 transition-all"
+                      />
+                      {firmantes.length > 1 && (
+                        <button
+                          onClick={() => removeFirmante(i)}
+                          className="text-zinc-600 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                    {/* Línea de firma imprimible */}
+                    <div className="border-b-2 border-zinc-700 pt-10 print:border-zinc-400 print:pt-14" />
+                    <p className="text-[10px] text-zinc-500 text-center print:text-zinc-600">
+                      {nombre.trim() || `Firmante ${i + 1}`}
+                    </p>
+                    <p className="text-[9px] text-zinc-600 text-center print:text-zinc-500">Firma y fecha</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Pie del acta ── */}
+            <div className="border-t border-zinc-700/40 pt-4 flex items-center justify-between text-[10px] text-zinc-600 print:border-zinc-300 print:text-zinc-500">
+              <span>StockIQ · Grupo Orvion Tech · {new Date().getFullYear()}</span>
+              <span>{tiendaNombre}{tiendaNit ? ` · NIT ${tiendaNit}` : ''}</span>
+            </div>
           </div>
         </div>
       )}

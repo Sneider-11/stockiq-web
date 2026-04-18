@@ -51,6 +51,7 @@ export default async function ReportePage({ params }: Props) {
       <ReporteClient
         tiendaNombre={tienda.nombre}
         tiendaColor={tienda.color}
+        tiendaNit={tienda.nit}
         registros={registros}
         sobrantes={sobrantes}
         totalCatalogo={catalogo.length}
