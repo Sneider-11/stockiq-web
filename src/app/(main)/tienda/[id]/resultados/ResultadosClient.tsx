@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, X, Minus, Package, Printer } from 'lucide-react';
+import { Search, X, Minus, Package, Printer, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { formatCOP } from '@/lib/utils';
@@ -114,10 +114,25 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
   const router       = useRouter();
   const searchParams = useSearchParams();
 
-  const [search, setSearch] = useState(() => searchParams.get('q')   ?? '');
-  const [filtro, setFiltro] = useState(() => searchParams.get('clf') ?? '');
+  const [search,     setSearch]     = useState(() => searchParams.get('q')   ?? '');
+  const [filtro,     setFiltro]     = useState(() => searchParams.get('clf') ?? '');
+  const [lastSync,   setLastSync]   = useState<Date>(new Date());
+  const [refreshing, setRefreshing] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    router.refresh();
+    setLastSync(new Date());
+    setTimeout(() => setRefreshing(false), 1000);
+  }, [router]);
+
+  // Auto-refresh cada 30 s mientras la página está abierta
+  useEffect(() => {
+    const id = setInterval(() => { router.refresh(); setLastSync(new Date()); }, 30_000);
+    return () => clearInterval(id);
+  }, [router]);
   const syncUrl = useCallback((q: string, clf: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -193,14 +208,27 @@ export default function ResultadosClient({ rows, tiendaNombre }: Props) {
           {filtered.length} de {rows.length} artículos
           {(search || filtro) && ' (filtrado)'}
         </p>
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 text-xs font-semibold transition-all"
-          title="Imprimir listado actual para reconteo"
-        >
-          <Printer size={13} />
-          Imprimir reconteo
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-zinc-600 hidden sm:block">
+            {lastSync.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </span>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            title="Actualizar resultados desde la nube"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 text-xs font-semibold transition-all disabled:opacity-40"
+          >
+            <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 text-xs font-semibold transition-all"
+            title="Imprimir listado actual para reconteo"
+          >
+            <Printer size={13} />
+            Imprimir reconteo
+          </button>
+        </div>
       </div>
 
       {/* ── Tabla ── */}

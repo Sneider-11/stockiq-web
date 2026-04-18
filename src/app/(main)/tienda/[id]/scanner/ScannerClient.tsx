@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   ScanLine, CheckCircle, AlertTriangle, XCircle,
   TrendingDown, TrendingUp, Minus, Package,
-  Keyboard, Zap, RotateCcw,
+  Keyboard, Zap, RotateCcw, RefreshCw,
 } from 'lucide-react';
 import { cn, formatCOP } from '@/lib/utils';
 import type { Articulo, Registro, Clasificacion } from '@/types';
@@ -37,6 +38,7 @@ function clasificar(stock: number, cantidad: number): Clasificacion {
 }
 
 export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registrosIniciales }: Props) {
+  const router = useRouter();
   const [barcode,      setBarcode]      = useState('');
   const [cantidad,     setCantidad]     = useState('1');
   const [pending,      setPending]      = useState<Articulo | null>(null);
@@ -46,12 +48,28 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
   const [flash,        setFlash]        = useState<'ok' | 'err' | null>(null);
   const [registros,    setRegistros]    = useState<Registro[]>(registrosIniciales);
   const [suggestions,  setSuggestions]  = useState<Articulo[]>([]);
+  const [lastSync,     setLastSync]     = useState<Date>(new Date());
+  const [refreshing,   setRefreshing]   = useState(false);
 
   const barcodeRef  = useRef<HTMLInputElement>(null);
   const cantidadRef = useRef<HTMLInputElement>(null);
 
   // Construir mapa de catálogo para lookup O(1)
   const catalogoMap = useRef(new Map(catalogo.map(a => [a.itemId, a])));
+
+  const handleRefresh = useCallback(async () => {
+    if (refreshing || pending) return;
+    setRefreshing(true);
+    router.refresh();
+    setLastSync(new Date());
+    setTimeout(() => setRefreshing(false), 1000);
+  }, [refreshing, pending, router]);
+
+  // Auto-refresh cada 30 s para ver scans del móvil en tiempo real
+  useEffect(() => {
+    const id = setInterval(() => { if (!pending) { router.refresh(); setLastSync(new Date()); } }, 30_000);
+    return () => clearInterval(id);
+  }, [pending, router]);
 
   // El input de barcode debe estar siempre enfocado (salvo cuando se confirma cantidad)
   useEffect(() => {
@@ -202,7 +220,20 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
       <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/40 px-5 py-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wide">Progreso de conteo</span>
-          <span className="text-sm font-black" style={{ color: progresoColor }}>{progreso}%</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-zinc-600">
+              Sync {lastSync.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="Actualizar datos desde la nube"
+              className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 transition-all disabled:opacity-40"
+            >
+              <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+            </button>
+            <span className="text-sm font-black" style={{ color: progresoColor }}>{progreso}%</span>
+          </div>
         </div>
         <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
           <div
