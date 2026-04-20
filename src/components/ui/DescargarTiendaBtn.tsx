@@ -10,7 +10,7 @@ interface Props {
   tiendaNombre: string;
 }
 
-const fDate = (s: string) => new Date(s).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+const fDate = (s: string) => new Date(s).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 export function DescargarTiendaBtn({ registros, tiendaNombre }: Props) {
   const [loading, setLoading] = useState(false);

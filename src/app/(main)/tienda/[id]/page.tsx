@@ -46,8 +46,9 @@ export default async function TiendaPage({ params }: Props) {
   const sobrReg        = registros.filter(r => r.clasificacion === 'SOBRANTE');
   const sinDif         = registros.filter(r => r.clasificacion === 'SIN_DIF');
   const ceros          = registros.filter(r => r.clasificacion === 'CERO');
-  const valorFaltante  = faltantes.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
-  const valorSobrante  = sobrReg.reduce((a, r)   => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
+  const valorFaltante     = faltantes.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
+  const valorSobrante     = sobrReg.reduce((a, r)   => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
+  const valorSobrSinStock = sobrantes.reduce((a, s) => a + s.precio * s.cantidad, 0);
 
   const barColor =
     progreso >= 80 ? '#10B981' :
@@ -241,6 +242,8 @@ export default async function TiendaPage({ params }: Props) {
             icon: <TrendingUp size={16} />,
             color: 'text-orange-400',
             bg: 'bg-orange-950/40 border-orange-800/50 hover:border-orange-700/70',
+            sub: valorSobrSinStock,
+            subFormat: 'cop' as const,
           },
         ].map((s, i) => (
           <div
