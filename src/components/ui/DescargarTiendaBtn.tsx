@@ -10,7 +10,9 @@ interface Props {
   tiendaNombre: string;
 }
 
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const fDate = (s: string) => new Date(s).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const fMes  = (s: string) => MESES[new Date(s).getMonth()];
 
 export function DescargarTiendaBtn({ registros, tiendaNombre }: Props) {
   const [loading, setLoading] = useState(false);
@@ -33,7 +35,8 @@ export function DescargarTiendaBtn({ registros, tiendaNombre }: Props) {
         'Costo Unitario':   r.costoUnitario,
         'Valor Diferencia': Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario,
         'Auditor':          r.usuarioNombre,
-        'Fecha':            fDate(r.escaneadoEn),
+        'Mes':              fMes(r.escaneadoEn),
+        'Fecha y Hora':     fDate(r.escaneadoEn),
       }));
 
       const ws = XLSX.utils.json_to_sheet(data);
@@ -42,7 +45,7 @@ export function DescargarTiendaBtn({ registros, tiendaNombre }: Props) {
       ws['!cols'] = [
         { wch: 16 }, { wch: 40 }, { wch: 16 }, { wch: 14 },
         { wch: 16 }, { wch: 12 }, { wch: 14 }, { wch: 15 },
-        { wch: 16 }, { wch: 22 }, { wch: 14 },
+        { wch: 16 }, { wch: 22 }, { wch: 12 }, { wch: 20 },
       ];
 
       XLSX.utils.book_append_sheet(wb, ws, tiendaNombre.substring(0, 31));

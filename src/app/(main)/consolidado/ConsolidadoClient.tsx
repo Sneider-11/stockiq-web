@@ -21,7 +21,8 @@ const MESES_FULL  = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','A
 
 const COP = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fCOP  = (v: number) => COP.format(v);
-const fDate = (s: string) => new Date(s).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+const fDate = (s: string) => new Date(s).toLocaleString('es-CO', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+const fMes  = (s: string) => MESES_FULL[new Date(s).getMonth()];
 
 function ClsfBadge({ c }: { c: Registro['clasificacion'] }) {
   if (c === 'FALTANTE') return <Badge variant="danger">Faltante</Badge>;
@@ -278,12 +279,13 @@ export default function ConsolidadoClient({ tiendas, registros }: Props) {
           'Costo Unitario':   r.costoUnitario,
           'Valor Diferencia': Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario,
           'Auditor':          r.usuarioNombre,
-          'Fecha':            fDate(r.escaneadoEn),
+          'Mes':              fMes(r.escaneadoEn),
+          'Fecha y Hora':     fDate(r.escaneadoEn),
         }));
         const ws = XLSX.utils.json_to_sheet(data);
         ws['!cols'] = [
           {wch:16},{wch:38},{wch:16},{wch:14},{wch:16},
-          {wch:12},{wch:14},{wch:15},{wch:16},{wch:22},{wch:14},
+          {wch:12},{wch:14},{wch:15},{wch:16},{wch:22},{wch:12},{wch:20},
         ];
         XLSX.utils.book_append_sheet(wb, ws, s.tienda.nombre.substring(0, 31));
       }

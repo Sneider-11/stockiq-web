@@ -578,7 +578,7 @@ export default function ReporteClient({
               <p className="text-xs text-zinc-500 mt-0.5">{tiendaNombre}</p>
             </div>
             <p className="text-xs text-zinc-600">
-              {new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}
+              {new Date().toLocaleString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
         </div>
@@ -627,7 +627,7 @@ export default function ReporteClient({
                 <div className="text-right">
                   <p className="text-[10px] text-zinc-500 print:text-zinc-600">Fecha de emisión</p>
                   <p className="text-sm font-bold text-zinc-300 print:text-black">
-                    {new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    {new Date().toLocaleString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
                   <p className="text-[10px] text-zinc-500 mt-2 print:text-zinc-600">Progreso del conteo</p>
                   <p className={cn('text-lg font-black', pct >= 80 ? 'text-emerald-400' : pct >= 40 ? 'text-amber-400' : 'text-red-400', 'print:text-black')}>

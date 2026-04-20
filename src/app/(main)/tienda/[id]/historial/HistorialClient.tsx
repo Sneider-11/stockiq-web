@@ -221,19 +221,19 @@ export default function HistorialClient({ snapshots: initial, tiendaId, canEdit 
             {canEdit && (
               <div className="absolute top-3 right-10">
                 {confirmDel === snap.id ? (
-                  <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 shadow-lg">
-                    <span className="text-[10px] text-zinc-400">¿Eliminar?</span>
+                  <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 shadow-xl">
+                    <span className="text-xs text-zinc-300 font-semibold">¿Eliminar?</span>
                     <button
                       onClick={() => setConfirmDel(null)}
-                      className="text-zinc-500 hover:text-zinc-300 text-[10px] font-semibold transition-colors"
+                      className="px-2.5 py-1 rounded-lg border border-zinc-600 text-zinc-300 text-xs font-semibold hover:bg-zinc-700 transition-colors"
                     >No</button>
                     <button
                       onClick={() => deleteOne(snap.id)}
                       disabled={deleting === snap.id}
-                      className="text-red-400 hover:text-red-300 text-[10px] font-bold transition-colors flex items-center gap-1 disabled:opacity-50"
+                      className="px-2.5 py-1 rounded-lg bg-red-900/60 border border-red-700/60 text-red-300 text-xs font-bold hover:bg-red-800/60 transition-colors flex items-center gap-1 disabled:opacity-50"
                     >
-                      {deleting === snap.id ? <RotateCcw size={9} className="animate-spin" /> : null}
-                      Sí
+                      {deleting === snap.id ? <RotateCcw size={11} className="animate-spin" /> : null}
+                      Sí, eliminar
                     </button>
                   </div>
                 ) : (
