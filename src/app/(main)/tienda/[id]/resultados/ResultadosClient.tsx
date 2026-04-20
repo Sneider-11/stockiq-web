@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, X, Minus, Package, Printer, RefreshCw, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -133,6 +133,18 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
   const [saving,       setSaving]       = useState(false);
   const [editError,    setEditError]    = useState('');
 
+  // Bloquear scroll del contenedor principal mientras el modal está abierto
+  useLayoutEffect(() => {
+    const main = document.querySelector('main');
+    if (!main) return;
+    if (editingRow) {
+      main.style.overflow = 'hidden';
+    } else {
+      main.style.overflow = '';
+    }
+    return () => { main.style.overflow = ''; };
+  }, [editingRow]);
+
   const abrirEdit = useCallback((r: ResultRow) => {
     setEditingRow(r);
     setEditCantidad(r.contado !== null ? String(r.contado) : '');
@@ -147,17 +159,28 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
   }, [saving]);
 
   const handleGuardar = useCallback(async () => {
-    if (!editingRow?.registroId || !tiendaId) return;
+    if (!editingRow || !tiendaId) return;
     const cant = parseInt(editCantidad, 10);
     if (isNaN(cant) || cant < 0) { setEditError('Ingresa una cantidad válida (0 o más).'); return; }
     setSaving(true);
     setEditError('');
     try {
-      const res = await fetch(`/api/tienda/${tiendaId}/registros/${editingRow.registroId}`, {
-        method:  'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ cantidad: cant, nota: editNota.trim(), stockSistema: editingRow.stockSist }),
-      });
+      let res: Response;
+      if (editingRow.registroId) {
+        // Artículo ya escaneado — actualizar
+        res = await fetch(`/api/tienda/${tiendaId}/registros/${editingRow.registroId}`, {
+          method:  'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ cantidad: cant, nota: editNota.trim(), stockSistema: editingRow.stockSist }),
+        });
+      } else {
+        // Artículo sin conteo — crear nuevo registro
+        res = await fetch(`/api/tienda/${tiendaId}/registros`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ itemId: editingRow.itemId, cantidad: cant, nota: editNota.trim() }),
+        });
+      }
       if (!res.ok) {
         const d = await res.json();
         setEditError(d.error ?? 'Error al guardar.');
@@ -240,7 +263,7 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
                   value={editCantidad}
                   onChange={e => { setEditCantidad(e.target.value); setEditError(''); }}
                   onKeyDown={e => e.key === 'Enter' && handleGuardar()}
-                  autoFocus
+                  ref={el => { if (el) el.focus({ preventScroll: true }); }}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 font-mono focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
                 />
               </div>
@@ -396,17 +419,13 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
                     </td>
                     {canEdit && (
                       <td className="px-2 py-3 text-center">
-                        {r.registroId ? (
-                          <button
-                            onClick={() => abrirEdit(r)}
-                            title="Editar conteo"
-                            className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
-                          >
-                            <Pencil size={13} />
-                          </button>
-                        ) : (
-                          <span className="text-zinc-700 text-xs">—</span>
-                        )}
+                        <button
+                          onClick={() => abrirEdit(r)}
+                          title={r.registroId ? 'Editar conteo' : 'Ingresar conteo'}
+                          className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
+                        >
+                          <Pencil size={13} />
+                        </button>
                       </td>
                     )}
                   </tr>

@@ -418,20 +418,61 @@ body {
 .only-print { display: none; }
 
 @media print {
-  /* Resetear tema oscuro */
+  /* ── Reset base ── */
   html, body {
     background-color: #ffffff !important;
     color: #000000 !important;
     color-scheme: light !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: 100% !important;
   }
 
-  /* Visibilidad en impresión */
-  .no-print   { display: none !important; }
+  /* ── Desbloquer todos los contenedores del layout ──
+     El layout raíz usa flex h-screen overflow-hidden, lo que trunca el print.
+     Convertimos toda la cadena en bloque visible para que el navegador
+     pueda renderizar el documento completo. */
+  body > div,
+  body > div > div,
+  body > div > div > div {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+  }
+
+  /* ── Ocultar sidebar y header ── */
+  .no-print { display: none !important; }
   .only-print { display: block !important; }
 
-  /* Preservar colores de fondo (cabeceras oscuras de tabla) */
+  /* Sidebar wrapper (hidden lg:flex en el layout) y header */
+  body > div > div:first-child,
+  header {
+    display: none !important;
+  }
+
+  /* ── Main: sin overflow, altura libre ── */
+  main {
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* ── Preservar colores exactos ── */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  /* ── Evitar cortes en tablas y secciones del acta ── */
+  .acta-print table    { page-break-inside: avoid; }
+  .acta-print > div    { page-break-inside: avoid; }
+  table                { page-break-inside: avoid; }
+  tr                   { page-break-inside: avoid; }
 }

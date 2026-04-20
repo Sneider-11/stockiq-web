@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { DescargarTiendaBtn } from '@/components/ui/DescargarTiendaBtn';
 import { ReiniciarBtn } from '@/components/ui/ReiniciarBtn';
+import { CerrarInventarioBtn } from '@/components/ui/CerrarInventarioBtn';
 import {
   ArrowLeft, Boxes, TrendingDown, TrendingUp,
   CheckCircle2, BarChart2, Upload, ClipboardList,
@@ -167,6 +168,7 @@ export default async function TiendaPage({ params }: Props) {
                 <Badge variant="success">Activo</Badge>
               </div>
             )}
+          <CerrarInventarioBtn tiendaId={id} tiendaNombre={tienda.nombre} modoActual={tienda.modoInventario as 'ONLINE' | 'OFFLINE'} />
           <ReiniciarBtn tiendaId={id} tiendaNombre={tienda.nombre} />
           <DescargarTiendaBtn registros={registros} tiendaNombre={tienda.nombre} />
         </div>
@@ -199,7 +201,7 @@ export default async function TiendaPage({ params }: Props) {
       </div>
 
       {/* ── Stats grid ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
         {[
           {
             label: 'Sin diferencia',
@@ -218,7 +220,7 @@ export default async function TiendaPage({ params }: Props) {
             subFormat: 'cop' as const,
           },
           {
-            label: 'Sobrantes',
+            label: 'Sobrantes reg.',
             value: sobrReg.length,
             icon: <TrendingUp size={16} />,
             color: 'text-emerald-400',
@@ -232,6 +234,13 @@ export default async function TiendaPage({ params }: Props) {
             icon: <AlertTriangle size={16} />,
             color: 'text-amber-400',
             bg: 'bg-amber-950/40 border-amber-800/50 hover:border-amber-700/70',
+          },
+          {
+            label: 'Sobr. s/stock',
+            value: sobrantes.length,
+            icon: <TrendingUp size={16} />,
+            color: 'text-orange-400',
+            bg: 'bg-orange-950/40 border-orange-800/50 hover:border-orange-700/70',
           },
         ].map((s, i) => (
           <div

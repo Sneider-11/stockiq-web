@@ -760,3 +760,21 @@ export async function dbGetAuditoriaSnapshot(snapId: string): Promise<AuditoriaS
     sobrantes:      data.sobrantes  ?? [],
   };
 }
+
+export async function dbDeleteAuditoriaSnapshot(snapId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('auditoria_historial')
+    .delete()
+    .eq('id', snapId);
+  if (error) throw error;
+}
+
+export async function dbDeleteAllAuditoriaSnapshots(tiendaId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('auditoria_historial')
+    .delete()
+    .eq('tienda_id', tiendaId);
+  if (error) throw error;
+}

@@ -12,13 +12,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex h-screen overflow-hidden bg-spc">
       {/* Sidebar — oculto en móvil, visible en desktop */}
-      <div className="hidden lg:flex">
+      <div className="hidden lg:flex no-print">
         <Sidebar user={user} />
       </div>
 
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <Header user={user} />
+        <div className="no-print">
+          <Header user={user} />
+        </div>
         <main className="flex-1 overflow-y-auto">
           <ToastProvider>
             <PageTransition>
