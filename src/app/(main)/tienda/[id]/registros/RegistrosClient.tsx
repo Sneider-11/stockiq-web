@@ -108,11 +108,21 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
   };
 
   const detallePanel = detalle && mounted ? createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:justify-end" role="dialog" aria-modal="true">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDetalle(null)} />
+    <>
+      {/* Backdrop — z-index inferior al panel */}
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.65)' }}
+        onClick={() => setDetalle(null)}
+      />
+      {/* Panel lateral / bottom-sheet — z-index propio */}
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', pointerEvents: 'none' }}
+        className="sm:items-stretch sm:justify-end"
+        role="dialog"
+        aria-modal="true"
+      >
       {/* Panel lateral / bottom-sheet */}
-      <div className="relative w-full sm:w-[400px] sm:h-full bg-zinc-900 border-t sm:border-t-0 sm:border-l border-zinc-700/60 shadow-2xl flex flex-col max-h-[85vh] sm:max-h-full rounded-t-2xl sm:rounded-none">
+      <div style={{ pointerEvents: 'auto' }} className="w-full sm:w-[400px] sm:h-full bg-zinc-900 border-t sm:border-t-0 sm:border-l border-zinc-700/60 shadow-2xl flex flex-col max-h-[85vh] sm:max-h-full rounded-t-2xl sm:rounded-none">
         {/* Header */}
         <div className="flex items-start justify-between p-5 border-b border-zinc-800/60 shrink-0">
           <div className="min-w-0 flex-1 pr-3">
@@ -185,7 +195,8 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
           </div>
         </div>
       </div>
-    </div>,
+      </div>
+    </>,
     document.body,
   ) : null;
 
