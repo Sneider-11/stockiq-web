@@ -373,8 +373,18 @@ export default async function HomePage() {
     ? stats.filter(s => !s.tienda.grupoId)
     : [];
 
-  // Conteo total de tiendas con grupo para calcular índices de animación
-  let animIndex = 0;
+  // Pre-calcular índices de animación por grupo (evita mutación durante render)
+  const grupoAnimData = gruposVisibles.map((g, i) => {
+    const tiendas = tiendaPorGrupo.get(g.id) ?? [];
+    const startIndex = gruposVisibles
+      .slice(0, i)
+      .reduce((acc, g2) => acc + (tiendaPorGrupo.get(g2.id) ?? []).length, 0);
+    return { g, tiendas, startIndex };
+  });
+  const sinGrupoStart = gruposVisibles.reduce(
+    (acc, g) => acc + (tiendaPorGrupo.get(g.id) ?? []).length,
+    0,
+  );
 
   return (
     <div className="max-w-7xl mx-auto page-enter">
@@ -429,17 +439,14 @@ export default async function HomePage() {
       )}
 
       {/* ── Grupos con tiendas ── */}
-      {gruposVisibles.map(g => {
-        const tiendas = tiendaPorGrupo.get(g.id) ?? [];
+      {grupoAnimData.map(({ g, tiendas, startIndex }) => {
         if (tiendas.length === 0) return null;
-        const idx = animIndex;
-        animIndex += tiendas.length;
         return (
           <GrupoSection
             key={g.id}
             grupo={g}
             stats={tiendas}
-            startIndex={idx}
+            startIndex={startIndex}
           />
         );
       })}
@@ -453,7 +460,7 @@ export default async function HomePage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {sinGrupo.map((s, i) => (
-              <TiendaCard key={s.tienda.id} stats={s} index={animIndex + i} />
+              <TiendaCard key={s.tienda.id} stats={s} index={sinGrupoStart + i} />
             ))}
           </div>
         </div>

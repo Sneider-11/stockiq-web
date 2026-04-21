@@ -28,9 +28,8 @@ export function AnimatedNumber({ value, format = 'integer', duration = 1000, cla
   const spanRef  = useRef<HTMLSpanElement>(null);
   const started  = useRef(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!mounted) return;

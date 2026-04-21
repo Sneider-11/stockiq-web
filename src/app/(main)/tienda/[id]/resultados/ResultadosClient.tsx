@@ -279,7 +279,7 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
               {editingRow.nota && (
                 <p className="text-xs text-amber-400/80 flex items-start gap-1.5">
                   <MessageSquare size={11} className="mt-0.5 shrink-0" />
-                  <span className="italic">"{editingRow.nota}"</span>
+                  <span className="italic">&ldquo;{editingRow.nota}&rdquo;</span>
                 </p>
               )}
               {editingRow.fotoUri && (

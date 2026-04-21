@@ -46,6 +46,7 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
   const [confirmClear,  setConfirmClear]  = useState(false);
   const [detalle,       setDetalle]       = useState<Registro | null>(null);
   const [mounted,       setMounted]       = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
 
   // Initialize filters from URL params (persisted across reloads/shares)
@@ -179,7 +180,7 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
               <span className="text-xs font-semibold text-zinc-400">Comentario del auditor</span>
             </div>
             {detalle.nota
-              ? <p className="text-sm text-amber-300/90 italic leading-relaxed">"{detalle.nota}"</p>
+              ? <p className="text-sm text-amber-300/90 italic leading-relaxed">&ldquo;{detalle.nota}&rdquo;</p>
               : <p className="text-xs text-zinc-600 italic">Sin comentario en este registro</p>}
           </div>
 

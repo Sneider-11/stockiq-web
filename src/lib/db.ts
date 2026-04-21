@@ -1,15 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase } from './supabase';
 import type { Tienda, Usuario, Articulo, Registro, SobranteSinStock, TiendaStats, GrupoComercial, GrupoStats, AuditoriaSnapshot } from '../types';
 
 // ─── GRUPOS COMERCIALES ───────────────────────────────────────────────────────
 
 export async function dbGetGrupos(): Promise<GrupoComercial[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from('grupos_comerciales') as any)
     .select('*')
     .order('creado_en');
   if (error || !data) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map(r => ({
     id:          r.id,
     nombre:      r.nombre,
@@ -22,7 +21,6 @@ export async function dbGetGrupos(): Promise<GrupoComercial[]> {
 export async function dbCreateGrupo(
   g: Pick<GrupoComercial, 'nombre' | 'color' | 'descripcion'>
 ): Promise<{ id: string }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from('grupos_comerciales') as any)
     .insert({ nombre: g.nombre, color: g.color, descripcion: g.descripcion ?? null })
     .select('id')
@@ -35,7 +33,6 @@ export async function dbUpdateGrupo(
   id: string,
   g: Partial<Pick<GrupoComercial, 'nombre' | 'color' | 'descripcion'>>
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('grupos_comerciales') as any)
     .update({ nombre: g.nombre, color: g.color, descripcion: g.descripcion ?? null })
     .eq('id', id);
@@ -43,7 +40,6 @@ export async function dbUpdateGrupo(
 
 export async function dbDeleteGrupo(id: string): Promise<void> {
   // Unlink tiendas before deleting so they are not left orphaned
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('tiendas') as any).update({ grupo_id: null }).eq('grupo_id', id);
   await supabase.from('grupos_comerciales').delete().eq('id', id);
 }
@@ -53,7 +49,6 @@ export async function dbAsignarTiendaAGrupo(
   tiendaId: string,
   grupoId: string | null,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('tiendas') as any)
     .update({ grupo_id: grupoId })
     .eq('id', tiendaId);
@@ -62,12 +57,10 @@ export async function dbAsignarTiendaAGrupo(
 // ─── TIENDAS ──────────────────────────────────────────────────────────────────
 
 export async function dbGetTiendas(): Promise<Tienda[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from('tiendas') as any)
     .select('*')
     .order('creado_en');
   if (error || !data) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map(r => ({
     id:             r.id,
     nombre:         r.nombre,
@@ -85,14 +78,12 @@ export async function dbUpsertTienda(
   modoInventario?: 'ONLINE' | 'OFFLINE',
 ): Promise<void> {
   if (modoInventario !== undefined) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase.from('tiendas') as any).upsert(
       { id: t.id, nombre: t.nombre, icono: t.icono, color: t.color, nit: t.nit ?? null,
         grupo_id: t.grupoId ?? null, modo_inventario: modoInventario },
       { onConflict: 'id' },
     );
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase.from('tiendas') as any).upsert(
       { id: t.id, nombre: t.nombre, icono: t.icono, color: t.color, nit: t.nit ?? null,
         grupo_id: t.grupoId ?? null },
@@ -103,13 +94,11 @@ export async function dbUpsertTienda(
 
 export async function dbDeleteTienda(id: string): Promise<void> {
   // Cascade delete: remove child records before the tienda itself
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await Promise.all([
     (supabase.from('registros') as any).delete().eq('tienda_id', id),
     (supabase.from('sobrantes') as any).delete().eq('tienda_id', id),
     (supabase.from('catalogos') as any).delete().eq('tienda_id', id),
   ]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('tiendas') as any).delete().eq('id', id);
 }
 
@@ -117,7 +106,6 @@ export async function dbSetModoInventario(
   id: string,
   modo: 'ONLINE' | 'OFFLINE',
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('tiendas') as any).update({ modo_inventario: modo }).eq('id', id);
 }
 
@@ -129,11 +117,9 @@ function migrateRol(rol: string): Usuario['rol'] {
 }
 
 export async function dbGetUsuarios(): Promise<Omit<Usuario, 'passWeb'>[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from('usuarios') as any)
     .select('id,cedula,nombre,rol,tiendas,tiendas_roles,grupos,telefono,activo,creado_por');
   if (error || !data) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map(r => ({
     id:           r.id,
     cedula:       r.cedula,
@@ -149,7 +135,6 @@ export async function dbGetUsuarios(): Promise<Omit<Usuario, 'passWeb'>[]> {
 }
 
 export async function dbGetUsuarioByCedula(cedula: string): Promise<Usuario | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from('usuarios') as any)
     .select('id,cedula,nombre,rol,tiendas,tiendas_roles,grupos,telefono,activo,creado_por,pass_web')
     .eq('cedula', cedula)
@@ -171,12 +156,10 @@ export async function dbGetUsuarioByCedula(cedula: string): Promise<Usuario | nu
 }
 
 export async function dbSetPassWeb(userId: string, passHash: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('usuarios') as any).update({ pass_web: passHash }).eq('id', userId);
 }
 
 export async function dbUpsertUsuario(u: Omit<Usuario, 'passWeb'>): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('usuarios') as any).upsert(
     {
       id:            u.id,
@@ -195,7 +178,6 @@ export async function dbUpsertUsuario(u: Omit<Usuario, 'passWeb'>): Promise<void
 }
 
 export async function dbDeleteUsuario(id: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('usuarios') as any).delete().eq('id', id);
 }
 
@@ -210,14 +192,12 @@ export async function dbGetRegistrosPaginados(
 ): Promise<{ data: Registro[]; total: number }> {
   const from = (page - 1) * REGISTROS_PAGE_SIZE;
   const to   = from + REGISTROS_PAGE_SIZE - 1;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error, count } = await (supabase.from('registros') as any)
     .select('*', { count: 'exact' })
     .eq('tienda_id', tiendaId)
     .order('escaneado_en', { ascending: false })
     .range(from, to);
   if (error || !data) return { data: [], total: 0 };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return {
     total: count ?? 0,
     data: (data as any[]).map(r => ({
@@ -239,14 +219,12 @@ export async function dbGetRegistrosPaginados(
 }
 
 export async function dbGetRegistros(tiendaId?: string): Promise<Registro[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (supabase.from('registros') as any)
     .select('*')
     .order('escaneado_en', { ascending: false });
   if (tiendaId) query = query.eq('tienda_id', tiendaId);
   const { data, error } = await query;
   if (error || !data) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map(r => ({
     id:            r.id,
     tiendaId:      r.tienda_id,
@@ -274,7 +252,6 @@ export async function dbActualizarRegistro(
     escaneadoEn:   string;
   },
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from('registros') as any)
     .update({
       cantidad:       data.cantidad,
@@ -288,22 +265,17 @@ export async function dbActualizarRegistro(
 }
 
 export async function dbDeleteRegistro(id: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('registros') as any).delete().eq('id', id);
 }
 
 export async function dbLimpiarRegistrosTienda(tiendaId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('registros') as any).delete().eq('tienda_id', tiendaId);
 }
 
 export async function dbReiniciarCompleto(tiendaId: string): Promise<void> {
   await Promise.all([
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase.from('registros') as any).delete().eq('tienda_id', tiendaId),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase.from('sobrantes') as any).delete().eq('tienda_id', tiendaId),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase.from('catalogos') as any).delete().eq('tienda_id', tiendaId),
   ]);
 }
@@ -322,7 +294,6 @@ export async function dbInsertRegistro(data: {
 }): Promise<Registro> {
   const id          = crypto.randomUUID();
   const escaneadoEn = new Date().toISOString();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from('registros') as any).insert({
     id,
     tienda_id:      data.tiendaId,
@@ -359,12 +330,10 @@ export async function dbInsertRegistro(data: {
 // ─── CATÁLOGOS ────────────────────────────────────────────────────────────────
 
 export async function dbGetCatalogo(tiendaId: string): Promise<Articulo[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from('catalogos') as any)
     .select('*')
     .eq('tienda_id', tiendaId);
   if (error || !data) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map(r => ({
     itemId:      r.item_id,
     descripcion: r.descripcion,
@@ -375,10 +344,8 @@ export async function dbGetCatalogo(tiendaId: string): Promise<Articulo[]> {
 }
 
 export async function dbUpsertCatalogo(tiendaId: string, articulos: Articulo[]): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('catalogos') as any).delete().eq('tienda_id', tiendaId);
   if (!articulos.length) return;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('catalogos') as any).insert(
     articulos.map(a => ({
       tienda_id:   tiendaId,
@@ -404,7 +371,6 @@ export async function dbCreateSobrante(s: {
 }): Promise<SobranteSinStock> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from('sobrantes') as any)
     .insert({
       id,
@@ -427,28 +393,23 @@ export async function dbCreateSobrante(s: {
 }
 
 export async function dbConfirmarSobrante(id: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('sobrantes') as any).update({ estado: 'CONFIRMADO' }).eq('id', id);
 }
 
 export async function dbDeleteSobrante(id: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('sobrantes') as any).delete().eq('id', id);
 }
 
 export async function dbGetSobrantes(tiendaId?: string): Promise<SobranteSinStock[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (supabase.from('sobrantes') as any)
     .select('*')
     .order('creado_en', { ascending: false });
   if (tiendaId) query = query.eq('tienda_id', tiendaId);
   const { data, error } = await query;
   if (error || !data) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map(mapSobrante);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapSobrante(r: any): SobranteSinStock {
   return {
     id:            r.id,
@@ -471,14 +432,12 @@ export async function dbGetSobrantes_paginados(
 ): Promise<{ data: SobranteSinStock[]; total: number }> {
   const from = (page - 1) * SOBRANTES_PAGE_SIZE;
   const to   = from + SOBRANTES_PAGE_SIZE - 1;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error, count } = await (supabase.from('sobrantes') as any)
     .select('*', { count: 'exact' })
     .eq('tienda_id', tiendaId)
     .order('creado_en', { ascending: false })
     .range(from, to);
   if (error || !data) return { data: [], total: 0 };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { total: count ?? 0, data: (data as any[]).map(mapSobrante) };
 }
 
@@ -519,7 +478,6 @@ export async function dbGetTiendasConStats(): Promise<TiendaStats[]> {
   const [tiendas, registros, catalogosRaw] = await Promise.all([
     dbGetTiendas(),
     dbGetRegistros(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase.from('catalogos') as any).select('tienda_id'),
   ]);
 
@@ -583,7 +541,6 @@ export interface Notification {
 }
 
 export async function dbGetNotifications(cedula: string, limit = 25): Promise<Notification[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('notifications')
     .select('*')
@@ -591,7 +548,6 @@ export async function dbGetNotifications(cedula: string, limit = 25): Promise<No
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error || !data) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.map((r: any) => ({
     id:        r.id,
     userId:    r.user_id,
@@ -606,7 +562,6 @@ export async function dbGetNotifications(cedula: string, limit = 25): Promise<No
 
 export async function dbMarkNotificationsRead(ids: string[]): Promise<void> {
   if (!ids.length) return;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any)
     .from('notifications')
     .update({ read: true })
@@ -614,7 +569,6 @@ export async function dbMarkNotificationsRead(ids: string[]): Promise<void> {
 }
 
 export async function dbMarkAllNotificationsRead(cedula: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any)
     .from('notifications')
     .update({ read: true })
@@ -658,7 +612,6 @@ export async function dbSaveAuditoriaSnapshot(
     (a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0,
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any).from('auditoria_historial').insert({
     tienda_id:       tiendaId,
     tienda_nombre:   tienda.nombre,
@@ -679,14 +632,12 @@ export async function dbSaveAuditoriaSnapshot(
 }
 
 export async function dbGetAuditoriaSnapshots(tiendaId: string): Promise<Omit<AuditoriaSnapshot, 'registros' | 'sobrantes'>[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('auditoria_historial')
     .select('id,tienda_id,tienda_nombre,cerrado_por,cerrado_en,total_catalogo,total_registros,progreso,valor_faltante,valor_sobrante,faltantes,sobrantes_reg,sin_diferencia,ceros,nivel_riesgo')
     .eq('tienda_id', tiendaId)
     .order('cerrado_en', { ascending: false });
   if (error || !data) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map(r => ({
     id:             r.id,
     tiendaId:       r.tienda_id,
@@ -714,14 +665,12 @@ export async function dbGetDashboardHistory(): Promise<{
   totalRegistros: number;
   progreso:       number;
 }[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabase as any)
     .from('auditoria_historial')
     .select('cerrado_en,tienda_nombre,valor_faltante,valor_sobrante,total_registros,progreso')
     .order('cerrado_en', { ascending: true })
     .limit(40);
   if (!data) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map(r => ({
     fecha:          r.cerrado_en,
     tiendaNombre:   r.tienda_nombre,
@@ -733,7 +682,6 @@ export async function dbGetDashboardHistory(): Promise<{
 }
 
 export async function dbGetAuditoriaSnapshot(snapId: string): Promise<AuditoriaSnapshot | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('auditoria_historial')
     .select('*')
@@ -762,7 +710,6 @@ export async function dbGetAuditoriaSnapshot(snapId: string): Promise<AuditoriaS
 }
 
 export async function dbDeleteAuditoriaSnapshot(snapId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('auditoria_historial')
     .delete()
@@ -771,7 +718,6 @@ export async function dbDeleteAuditoriaSnapshot(snapId: string): Promise<void> {
 }
 
 export async function dbDeleteAllAuditoriaSnapshots(tiendaId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('auditoria_historial')
     .delete()
