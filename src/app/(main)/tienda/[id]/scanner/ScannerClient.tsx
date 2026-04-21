@@ -252,7 +252,6 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
       </div>
 
       {/* ── Panel principal de escaneo ── */}
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
         className={cn(
           'rounded-2xl border p-6 transition-all duration-200 cursor-text',

@@ -24,6 +24,7 @@ export function Modal({ onClose, children }: Props) {
   useEffect(() => { onCloseRef.current = onClose; });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -67,7 +68,6 @@ export function Modal({ onClose, children }: Props) {
       document.body.style.overflow = prev;
       document.removeEventListener('keydown', onKey);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!mounted) return null;

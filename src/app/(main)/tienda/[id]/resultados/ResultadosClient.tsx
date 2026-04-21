@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, X, Minus, Package, Printer, RefreshCw, Pencil, MessageSquare, Camera, User, Clock, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { formatCOP } from '@/lib/utils';
@@ -159,7 +160,6 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
   // abrirEdit puede recibir el registro específico a editar (desde el panel de detalle)
   // o un ResultRow completo (desde el lápiz de la tabla, que edita el más reciente)
   const abrirEdit = useCallback((r: ResultRow, reg?: Registro) => {
-    const targetReg = reg ?? (r.allRegistros?.[0] ?? null);
     setEditingRow(r);
     setEditRegId(reg?.id ?? r.registroId);
     setEditCantidad(reg ? String(reg.cantidad) : (r.contado !== null ? String(r.contado) : ''));
@@ -233,8 +233,8 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const p = new URLSearchParams(searchParams.toString());
-      q   ? p.set('q',   q)   : p.delete('q');
-      clf ? p.set('clf', clf) : p.delete('clf');
+      if (q)   p.set('q',   q);   else p.delete('q');
+      if (clf) p.set('clf', clf); else p.delete('clf');
       router.replace(`?${p.toString()}`, { scroll: false });
     }, 400);
   }, [router, searchParams]);
@@ -264,7 +264,6 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
 
   // Portal: se monta en document.body para escapar de cualquier stacking context
   const [mounted, setMounted] = useState(false);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
 
   // ── Panel de detalle del artículo (todos los conteos) ────────────────────────
@@ -346,7 +345,7 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
                       <p className="text-xs text-zinc-600 italic">Sin comentario</p>
                     )}
                     {reg.fotoUri && (
-                      <img src={reg.fotoUri} alt="Foto del conteo" className="w-full rounded-lg max-h-40 object-cover border border-zinc-700/40" />
+                      <Image src={reg.fotoUri} alt="Foto del conteo" width={400} height={300} className="w-full rounded-lg max-h-40 object-cover border border-zinc-700/40" unoptimized />
                     )}
                     {canEdit && (
                       <button
@@ -401,7 +400,7 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
                 </p>
               )}
               {editingRow.fotoUri && (
-                <img src={editingRow.fotoUri} alt="Foto del conteo" className="w-full rounded-lg max-h-32 object-cover" />
+                <Image src={editingRow.fotoUri} alt="Foto del conteo" width={400} height={300} className="w-full rounded-lg max-h-32 object-cover" unoptimized />
               )}
             </div>
           )}

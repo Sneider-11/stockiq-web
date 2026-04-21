@@ -85,7 +85,7 @@ export default function LoginPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') step === 'login' ? handleLogin() : handleSetup();
+    if (e.key === 'Enter') { if (step === 'login') handleLogin(); else handleSetup(); }
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────

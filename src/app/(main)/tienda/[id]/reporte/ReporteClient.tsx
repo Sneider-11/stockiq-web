@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
   FileText, BarChart3, DollarSign, Users,
   TrendingDown, TrendingUp, AlertTriangle, CheckCircle2,
-  Shield, Printer, Activity, Target, Minus, ClipboardSignature, Plus, Trash2,
+  Shield, Printer, Activity, Target, ClipboardSignature, Plus, Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCOP } from '@/lib/utils';
@@ -108,7 +108,7 @@ interface Props {
 type Tab = 'resumen' | 'economico' | 'equipo' | 'conclusiones' | 'acta';
 
 export default function ReporteClient({
-  tiendaNombre, tiendaColor, tiendaNit, registros, sobrantes, totalCatalogo, valorInventario,
+  tiendaNombre, tiendaNit, registros, sobrantes, totalCatalogo, valorInventario,
 }: Props) {
   const [tab, setTab] = useState<Tab>('resumen');
   // Firmantes editables antes de imprimir

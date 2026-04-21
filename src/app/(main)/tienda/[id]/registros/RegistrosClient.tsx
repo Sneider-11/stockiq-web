@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { Trash2, Loader2, Search, AlertTriangle, Package, X, Filter, Check, AlertCircle, MessageSquare, Camera, User, Clock } from 'lucide-react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { formatDate } from '@/lib/utils';
@@ -59,8 +60,8 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const p = new URLSearchParams(searchParams.toString());
-      q   ? p.set('q',   q)   : p.delete('q');
-      clf ? p.set('clf', clf) : p.delete('clf');
+      if (q)   p.set('q',   q);   else p.delete('q');
+      if (clf) p.set('clf', clf); else p.delete('clf');
       router.replace(`?${p.toString()}`, { scroll: false });
     }, 400);
   }, [router, searchParams]);
@@ -191,7 +192,7 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
               <span className="text-xs font-semibold text-zinc-400">Fotografía del conteo</span>
             </div>
             {detalle.fotoUri
-              ? <img src={detalle.fotoUri} alt="Foto del conteo" className="w-full rounded-xl object-cover max-h-60 border border-zinc-700/40" />
+              ? <Image src={detalle.fotoUri} alt="Foto del conteo" width={400} height={300} className="w-full rounded-xl object-cover max-h-60 border border-zinc-700/40" unoptimized />
               : <p className="text-xs text-zinc-600 italic">Sin foto en este registro</p>}
           </div>
         </div>

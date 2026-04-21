@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import {
   BarChart3, Download, Filter, TrendingDown, TrendingUp,
-  Minus, Package, Calendar, ChevronDown, ChevronUp,
+  Minus, Calendar, ChevronDown,
   Loader2, FileSpreadsheet, ListFilter, Boxes,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -44,7 +44,6 @@ interface Section {
 
 function AccordionSection({ section, defaultOpen = false }: { section: Section; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
-  const contentRef = useRef<HTMLDivElement>(null);
   const { tienda: t, regs, faltantes, sobrantes, sinDif, ceros, valorFaltante, valorSobrante } = section;
 
   return (
