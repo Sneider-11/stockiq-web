@@ -3,10 +3,11 @@
 import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, X, Minus, Package, Printer, RefreshCw, Pencil, MessageSquare, Camera } from 'lucide-react';
+import { Search, X, Minus, Package, Printer, RefreshCw, Pencil, MessageSquare, Camera, User, Clock, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { formatCOP } from '@/lib/utils';
+import type { Registro } from '@/types';
 
 export type ClsfType = 'FALTANTE' | 'SOBRANTE' | 'SIN_DIF' | 'CERO' | 'NO_CONTADO';
 
@@ -25,6 +26,7 @@ export interface ResultRow {
   fotoUri?:      string | null;
   usuarioNombre?:string;
   escaneadoEn?:  string;
+  allRegistros?: Registro[];
 }
 
 const FILTROS = [
@@ -130,8 +132,13 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
   const [lastSync,   setLastSync]   = useState<Date>(new Date());
   const [refreshing, setRefreshing] = useState(false);
 
+  // ── Panel de detalle de artículo (todos los conteos) ────────────────────────
+  const [detalleRow,   setDetalleRow]   = useState<ResultRow | null>(null);
+  const [detalleReg,   setDetalleReg]   = useState<Registro | null>(null); // conteo seleccionado dentro del detalle
+
   // ── Estado del modal de edición ──────────────────────────────────────────────
   const [editingRow,   setEditingRow]   = useState<ResultRow | null>(null);
+  const [editRegId,    setEditRegId]    = useState<string | undefined>(undefined);
   const [editCantidad, setEditCantidad] = useState('');
   const [editNota,     setEditNota]     = useState('');
   const [saving,       setSaving]       = useState(false);
@@ -149,16 +156,23 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
     return () => { main.style.overflow = ''; };
   }, [editingRow]);
 
-  const abrirEdit = useCallback((r: ResultRow) => {
+  // abrirEdit puede recibir el registro específico a editar (desde el panel de detalle)
+  // o un ResultRow completo (desde el lápiz de la tabla, que edita el más reciente)
+  const abrirEdit = useCallback((r: ResultRow, reg?: Registro) => {
+    const targetReg = reg ?? (r.allRegistros?.[0] ?? null);
     setEditingRow(r);
-    setEditCantidad(r.contado !== null ? String(r.contado) : '');
-    setEditNota(r.nota ?? '');
+    setEditRegId(reg?.id ?? r.registroId);
+    setEditCantidad(reg ? String(reg.cantidad) : (r.contado !== null ? String(r.contado) : ''));
+    setEditNota(reg ? (reg.nota ?? '') : (r.nota ?? ''));
     setEditError('');
-  }, []);
+    // Si viene desde el panel de detalle, no lo cerramos — se superpondrán
+    if (detalleReg) setDetalleReg(null);
+  }, [detalleReg]);
 
   const cerrarEdit = useCallback(() => {
     if (saving) return;
     setEditingRow(null);
+    setEditRegId(undefined);
     setEditError('');
   }, [saving]);
 
@@ -170,9 +184,9 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
     setEditError('');
     try {
       let res: Response;
-      if (editingRow.registroId) {
-        // Artículo ya escaneado — actualizar
-        res = await fetch(`/api/tienda/${tiendaId}/registros/${editingRow.registroId}`, {
+      if (editRegId) {
+        // Registro específico — actualizar
+        res = await fetch(`/api/tienda/${tiendaId}/registros/${editRegId}`, {
           method:  'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({ cantidad: cant, nota: editNota.trim(), stockSistema: editingRow.stockSist }),
@@ -191,13 +205,15 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
         return;
       }
       setEditingRow(null);
+      setEditRegId(undefined);
+      setDetalleRow(null);
       router.refresh();
     } catch {
       setEditError('Error de red. Intenta de nuevo.');
     } finally {
       setSaving(false);
     }
-  }, [editingRow, editCantidad, editNota, tiendaId, router]);
+  }, [editingRow, editRegId, editCantidad, editNota, tiendaId, router]);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -248,7 +264,109 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
 
   // Portal: se monta en document.body para escapar de cualquier stacking context
   const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
+
+  // ── Panel de detalle del artículo (todos los conteos) ────────────────────────
+  const detallePanel = detalleRow && mounted ? createPortal(
+    <>
+      <div style={{ position:'fixed', inset:0, zIndex:9998, background:'rgba(0,0,0,0.65)' }} onClick={() => { setDetalleRow(null); setDetalleReg(null); }} />
+      <div style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', alignItems:'flex-end', justifyContent:'center', pointerEvents:'none' }} className="sm:items-stretch sm:justify-end">
+        <div style={{ pointerEvents:'auto' }} className="w-full sm:w-[420px] sm:h-full bg-zinc-900 border-t sm:border-t-0 sm:border-l border-zinc-700/60 shadow-2xl flex flex-col max-h-[90vh] sm:max-h-full rounded-t-2xl sm:rounded-none">
+          {/* Header */}
+          <div className="flex items-start justify-between p-5 border-b border-zinc-800/60 shrink-0">
+            <div className="min-w-0 flex-1 pr-3">
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold mb-1">Conteos del artículo</p>
+              <p className="text-sm font-bold text-zinc-100 leading-snug truncate">{detalleRow.descripcion}</p>
+              <p className="text-[11px] text-zinc-500 mt-0.5">{detalleRow.itemId} · {detalleRow.ubicacion}</p>
+            </div>
+            <button onClick={() => { setDetalleRow(null); setDetalleReg(null); }} className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all shrink-0"><X size={16} /></button>
+          </div>
+
+          {/* Resumen artículo */}
+          <div className="grid grid-cols-3 gap-2 p-4 border-b border-zinc-800/40 shrink-0">
+            {[
+              { label: 'Sistema', value: detalleRow.stockSist, color: 'text-zinc-300' },
+              { label: 'Último conteo', value: detalleRow.contado ?? '—', color: 'text-zinc-100 font-black' },
+              { label: 'Diferencia',
+                value: detalleRow.diferencia === null ? '—' : (detalleRow.diferencia > 0 ? `+${detalleRow.diferencia}` : String(detalleRow.diferencia)),
+                color: detalleRow.diferencia === null ? 'text-zinc-500' : detalleRow.diferencia === 0 ? 'text-zinc-400' : detalleRow.diferencia > 0 ? 'text-emerald-400' : 'text-red-400' },
+            ].map(q => (
+              <div key={q.label} className="rounded-xl bg-zinc-800/50 border border-zinc-700/40 p-3 text-center">
+                <p className={`text-lg font-black ${q.color}`}>{q.value}</p>
+                <p className="text-[10px] text-zinc-500 mt-0.5">{q.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Lista de conteos */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold mb-3">
+              {(detalleRow.allRegistros?.length ?? 0)} conteo{(detalleRow.allRegistros?.length ?? 0) !== 1 ? 's' : ''} registrado{(detalleRow.allRegistros?.length ?? 0) !== 1 ? 's' : ''}
+            </p>
+            {(detalleRow.allRegistros ?? []).length === 0 && (
+              <p className="text-xs text-zinc-600 italic text-center py-8">Sin conteos para este artículo</p>
+            )}
+            {(detalleRow.allRegistros ?? []).map(reg => (
+              <button
+                key={reg.id}
+                onClick={() => setDetalleReg(detalleReg?.id === reg.id ? null : reg)}
+                className={cn(
+                  'w-full text-left rounded-xl border p-3 transition-all',
+                  detalleReg?.id === reg.id
+                    ? 'bg-prp/10 border-prp/40'
+                    : 'bg-zinc-800/40 border-zinc-700/40 hover:bg-zinc-800/70',
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <User size={11} className="text-zinc-500 shrink-0" />
+                    <span className="text-sm font-semibold text-zinc-200 truncate">{reg.usuarioNombre}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {reg.nota && <MessageSquare size={11} className="text-amber-400" />}
+                    {reg.fotoUri && <Camera size={11} className="text-sky-400" />}
+                    <span className="text-xs font-black text-zinc-100 bg-zinc-700/60 px-2 py-0.5 rounded-lg">{reg.cantidad} ud.</span>
+                    <ChevronRight size={12} className={cn('text-zinc-600 transition-transform', detalleReg?.id === reg.id && 'rotate-90')} />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 mt-1.5">
+                  <Clock size={10} className="text-zinc-600" />
+                  <span className="text-[10px] text-zinc-600">
+                    {new Date(reg.escaneadoEn).toLocaleString('es-CO', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}
+                  </span>
+                </div>
+
+                {/* Detalle expandido del conteo */}
+                {detalleReg?.id === reg.id && (
+                  <div className="mt-3 space-y-2 pt-3 border-t border-zinc-700/40">
+                    {reg.nota ? (
+                      <p className="text-xs text-amber-300/90 italic">&ldquo;{reg.nota}&rdquo;</p>
+                    ) : (
+                      <p className="text-xs text-zinc-600 italic">Sin comentario</p>
+                    )}
+                    {reg.fotoUri && (
+                      <img src={reg.fotoUri} alt="Foto del conteo" className="w-full rounded-lg max-h-40 object-cover border border-zinc-700/40" />
+                    )}
+                    {canEdit && (
+                      <button
+                        onClick={e => { e.stopPropagation(); abrirEdit(detalleRow, reg); }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-prp/15 border border-prp/30 text-vlt text-xs font-semibold hover:bg-prp/25 transition-all mt-1"
+                      >
+                        <Pencil size={11} />
+                        Editar este conteo
+                      </button>
+                    )}
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>,
+    document.body,
+  ) : null;
 
   const editModal = editingRow && mounted ? createPortal(
     <>
@@ -345,6 +463,7 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
   return (
     <>
       {editModal}
+      {detallePanel}
 
       {/* ── Filtros ── */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -433,13 +552,18 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
               </thead>
               <tbody className="divide-y divide-zinc-800/40">
                 {filtered.map(r => (
-                  <tr key={r.itemId} className="hover:bg-zinc-900/40 transition-colors">
+                  <tr key={r.itemId} onClick={() => { setDetalleRow(r); setDetalleReg(null); }} className="hover:bg-zinc-900/40 transition-colors cursor-pointer">
                     <td className="px-4 py-3">
                       <p className="text-zinc-200 font-medium truncate max-w-[200px]">{r.descripcion}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[11px] text-zinc-500">{r.itemId}</span>
                         {r.nota && <span title="Tiene nota"><MessageSquare size={10} className="text-amber-400/70 shrink-0" /></span>}
                         {r.fotoUri && <span title="Tiene foto"><Camera size={10} className="text-sky-400/70 shrink-0" /></span>}
+                        {(r.allRegistros?.length ?? 0) > 1 && (
+                          <span className="text-[9px] font-bold text-vlt/70 bg-prp/10 border border-prp/20 px-1.5 rounded-full">
+                            {r.allRegistros!.length} conteos
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-zinc-500 text-xs hidden md:table-cell">{r.ubicacion}</td>
@@ -466,8 +590,8 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
                     {canEdit && (
                       <td className="px-2 py-3 text-center">
                         <button
-                          onClick={() => abrirEdit(r)}
-                          title={r.registroId ? 'Editar conteo' : 'Ingresar conteo'}
+                          onClick={e => { e.stopPropagation(); abrirEdit(r); }}
+                          title={r.registroId ? 'Editar conteo más reciente' : 'Ingresar conteo'}
                           className="p-1.5 rounded-lg text-zinc-600 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
                         >
                           <Pencil size={13} />

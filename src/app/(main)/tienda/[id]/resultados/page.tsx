@@ -25,22 +25,26 @@ export default async function ResultadosPage({ params }: Props) {
   const canEdit = !!session && ['SUPERADMIN', 'ADMIN'].includes(session.rol) &&
     (session.rol === 'SUPERADMIN' || session.tiendas.includes(id));
 
-  // registros viene ordenado desc por escaneado_en — tomamos el primero por itemId (el más reciente)
-  const regMap = new Map<string, Registro>();
+  // Agrupar TODOS los registros por artículo — cada auditor puede tener su propio conteo
+  const regsByItem = new Map<string, Registro[]>();
   for (const r of registros) {
-    if (!regMap.has(r.itemId)) regMap.set(r.itemId, r);
+    const prev = regsByItem.get(r.itemId) ?? [];
+    regsByItem.set(r.itemId, [...prev, r]);
   }
 
   const rows: ResultRow[] = catalogo.map((a: Articulo) => {
-    const reg        = regMap.get(a.itemId);
-    const contado    = reg ? reg.cantidad : null;
+    const regs       = regsByItem.get(a.itemId) ?? [];
+    const latest     = regs[0]; // registros ya vienen ordenados desc por escaneado_en
+    const contado    = latest ? latest.cantidad : null;
     const diferencia = contado !== null ? contado - a.stock : null;
     const valorDif   = diferencia !== null ? Math.abs(diferencia) * a.costo : 0;
-    const clsf: ClsfType = reg ? (reg.clasificacion as ClsfType) : 'NO_CONTADO';
+    const clsf: ClsfType = latest ? (latest.clasificacion as ClsfType) : 'NO_CONTADO';
     return { itemId: a.itemId, descripcion: a.descripcion, ubicacion: a.ubicacion,
              stockSist: a.stock, contado, diferencia, costo: a.costo, valorDif, clsf,
-             registroId: reg?.id, nota: reg?.nota,
-             fotoUri: reg?.fotoUri, usuarioNombre: reg?.usuarioNombre, escaneadoEn: reg?.escaneadoEn };
+             registroId: latest?.id, nota: latest?.nota,
+             fotoUri: latest?.fotoUri, usuarioNombre: latest?.usuarioNombre,
+             escaneadoEn: latest?.escaneadoEn,
+             allRegistros: regs };
   });
 
   rows.sort((a, b) => {

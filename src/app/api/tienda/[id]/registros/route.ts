@@ -35,9 +35,10 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Artículo no encontrado en el catálogo.', code: 'NOT_IN_CATALOG' }, { status: 404 });
   }
 
-  // Verificar si ya existe un registro para este artículo en esta tienda
+  // Verificar si ya existe un registro del MISMO usuario para este artículo.
+  // Nunca sobreescribir el registro de otro usuario — cada auditor tiene su propio conteo.
   const existentes = await dbGetRegistros(id);
-  const yaExiste   = existentes.find(r => r.itemId === itemId);
+  const yaExiste   = existentes.find(r => r.itemId === itemId && r.usuarioNombre === session.nombre);
   const clsf       = clasificar(articulo.stock, cantidad);
   const ahora      = new Date().toISOString();
 
