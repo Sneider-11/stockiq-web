@@ -438,8 +438,8 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
                       <p className="text-zinc-200 font-medium truncate max-w-[200px]">{r.descripcion}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[11px] text-zinc-500">{r.itemId}</span>
-                        {r.nota && <MessageSquare size={10} className="text-amber-400/70 shrink-0" title="Tiene nota" />}
-                        {r.fotoUri && <Camera size={10} className="text-sky-400/70 shrink-0" title="Tiene foto" />}
+                        {r.nota && <span title="Tiene nota"><MessageSquare size={10} className="text-amber-400/70 shrink-0" /></span>}
+                        {r.fotoUri && <span title="Tiene foto"><Camera size={10} className="text-sky-400/70 shrink-0" /></span>}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-zinc-500 text-xs hidden md:table-cell">{r.ubicacion}</td>
