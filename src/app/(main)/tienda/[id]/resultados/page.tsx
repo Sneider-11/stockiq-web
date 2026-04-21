@@ -39,7 +39,8 @@ export default async function ResultadosPage({ params }: Props) {
     const clsf: ClsfType = reg ? (reg.clasificacion as ClsfType) : 'NO_CONTADO';
     return { itemId: a.itemId, descripcion: a.descripcion, ubicacion: a.ubicacion,
              stockSist: a.stock, contado, diferencia, costo: a.costo, valorDif, clsf,
-             registroId: reg?.id, nota: reg?.nota };
+             registroId: reg?.id, nota: reg?.nota,
+             fotoUri: reg?.fotoUri, usuarioNombre: reg?.usuarioNombre, escaneadoEn: reg?.escaneadoEn };
   });
 
   rows.sort((a, b) => {

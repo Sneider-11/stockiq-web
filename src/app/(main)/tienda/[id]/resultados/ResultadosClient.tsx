@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, X, Minus, Package, Printer, RefreshCw, Pencil } from 'lucide-react';
+import { Search, X, Minus, Package, Printer, RefreshCw, Pencil, MessageSquare, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { formatCOP } from '@/lib/utils';
@@ -10,17 +11,20 @@ import { formatCOP } from '@/lib/utils';
 export type ClsfType = 'FALTANTE' | 'SOBRANTE' | 'SIN_DIF' | 'CERO' | 'NO_CONTADO';
 
 export interface ResultRow {
-  itemId:      string;
-  descripcion: string;
-  ubicacion:   string;
-  stockSist:   number;
-  contado:     number | null;
-  diferencia:  number | null;
-  costo:       number;
-  valorDif:    number;
-  clsf:        ClsfType;
-  registroId?: string;
-  nota?:       string;
+  itemId:        string;
+  descripcion:   string;
+  ubicacion:     string;
+  stockSist:     number;
+  contado:       number | null;
+  diferencia:    number | null;
+  costo:         number;
+  valorDif:      number;
+  clsf:          ClsfType;
+  registroId?:   string;
+  nota?:         string;
+  fotoUri?:      string | null;
+  usuarioNombre?:string;
+  escaneadoEn?:  string;
 }
 
 const FILTROS = [
@@ -242,67 +246,94 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
     setTimeout(() => { win.print(); win.close(); }, 400);
   }, [filtered, filtro, tiendaNombre, search]);
 
-  return (
-    <>
-      {/* ── Modal de edición ── */}
-      {editingRow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={cerrarEdit} />
-          <div className="relative w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl p-6">
-            <h2 className="text-base font-black text-zinc-100 mb-1">Editar conteo</h2>
-            <p className="text-xs text-zinc-500 mb-5 truncate">{editingRow.descripcion}</p>
+  // Portal: se monta en document.body para escapar de cualquier stacking context
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
-                  Cantidad contada <span className="text-zinc-600">(Sistema: {editingRow.stockSist})</span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={editCantidad}
-                  onChange={e => { setEditCantidad(e.target.value); setEditError(''); }}
-                  onKeyDown={e => e.key === 'Enter' && handleGuardar()}
-                  ref={el => { if (el) el.focus({ preventScroll: true }); }}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 font-mono focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Nota (opcional)</label>
-                <textarea
-                  rows={2}
-                  value={editNota}
-                  onChange={e => setEditNota(e.target.value)}
-                  placeholder="Observación sobre esta diferencia…"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all resize-none"
-                />
-              </div>
-            </div>
+  const editModal = editingRow && mounted ? createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={cerrarEdit} />
+      <div className="relative w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl p-6">
+        <h2 className="text-base font-black text-zinc-100 mb-1">Editar conteo</h2>
+        <p className="text-xs text-zinc-500 mb-5 truncate">{editingRow.descripcion}</p>
 
-            {editError && (
-              <p className="mt-3 text-xs text-red-400 font-semibold">{editError}</p>
+        {/* Detalle del conteo existente */}
+        {(editingRow.usuarioNombre || editingRow.escaneadoEn || editingRow.nota || editingRow.fotoUri) && (
+          <div className="mb-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50 p-3 space-y-2">
+            {editingRow.usuarioNombre && (
+              <p className="text-xs text-zinc-400"><span className="text-zinc-600">Auditor:</span> {editingRow.usuarioNombre}</p>
             )}
+            {editingRow.escaneadoEn && (
+              <p className="text-xs text-zinc-400"><span className="text-zinc-600">Contado:</span> {new Date(editingRow.escaneadoEn).toLocaleString('es-CO', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
+            )}
+            {editingRow.nota && (
+              <p className="text-xs text-amber-400/80 flex items-start gap-1.5">
+                <MessageSquare size={11} className="mt-0.5 shrink-0" />
+                <span className="italic">"{editingRow.nota}"</span>
+              </p>
+            )}
+            {editingRow.fotoUri && (
+              <img src={editingRow.fotoUri} alt="Foto del conteo" className="w-full rounded-lg max-h-32 object-cover" />
+            )}
+          </div>
+        )}
 
-            <div className="flex gap-2 mt-5">
-              <button
-                onClick={cerrarEdit}
-                disabled={saving}
-                className="flex-1 h-10 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold hover:text-zinc-200 hover:border-zinc-600 transition-all disabled:opacity-40"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleGuardar}
-                disabled={saving}
-                className="flex-1 h-10 rounded-xl bg-prp/20 border border-prp/40 text-vlt text-sm font-bold hover:bg-prp/30 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
-              >
-                {saving ? <RefreshCw size={13} className="animate-spin" /> : null}
-                {saving ? 'Guardando…' : 'Guardar'}
-              </button>
-            </div>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
+              Cantidad contada <span className="text-zinc-600">(Sistema: {editingRow.stockSist})</span>
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={editCantidad}
+              onChange={e => { setEditCantidad(e.target.value); setEditError(''); }}
+              onKeyDown={e => e.key === 'Enter' && handleGuardar()}
+              ref={el => { if (el) el.focus({ preventScroll: true }); }}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 font-mono focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Nota (opcional)</label>
+            <textarea
+              rows={2}
+              value={editNota}
+              onChange={e => setEditNota(e.target.value)}
+              placeholder="Observación sobre esta diferencia…"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-prp/50 focus:border-prp/50 transition-all resize-none"
+            />
           </div>
         </div>
-      )}
+
+        {editError && (
+          <p className="mt-3 text-xs text-red-400 font-semibold">{editError}</p>
+        )}
+
+        <div className="flex gap-2 mt-5">
+          <button
+            onClick={cerrarEdit}
+            disabled={saving}
+            className="flex-1 h-10 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold hover:text-zinc-200 hover:border-zinc-600 transition-all disabled:opacity-40"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleGuardar}
+            disabled={saving}
+            className="flex-1 h-10 rounded-xl bg-prp/20 border border-prp/40 text-vlt text-sm font-bold hover:bg-prp/30 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            {saving ? <RefreshCw size={13} className="animate-spin" /> : null}
+            {saving ? 'Guardando…' : 'Guardar'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  ) : null;
+
+  return (
+    <>
+      {editModal}
 
       {/* ── Filtros ── */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -394,7 +425,11 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
                   <tr key={r.itemId} className="hover:bg-zinc-900/40 transition-colors">
                     <td className="px-4 py-3">
                       <p className="text-zinc-200 font-medium truncate max-w-[200px]">{r.descripcion}</p>
-                      <p className="text-[11px] text-zinc-500">{r.itemId}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[11px] text-zinc-500">{r.itemId}</span>
+                        {r.nota && <MessageSquare size={10} className="text-amber-400/70 shrink-0" title="Tiene nota" />}
+                        {r.fotoUri && <Camera size={10} className="text-sky-400/70 shrink-0" title="Tiene foto" />}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-zinc-500 text-xs hidden md:table-cell">{r.ubicacion}</td>
                     <td className="px-4 py-3 text-center text-zinc-400 font-mono">{r.stockSist}</td>

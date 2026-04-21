@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { Trash2, Loader2, Search, AlertTriangle, Package, X, Filter, Check, AlertCircle } from 'lucide-react';
+import { Trash2, Loader2, Search, AlertTriangle, Package, X, Filter, Check, AlertCircle, MessageSquare, Camera, User, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { formatDate } from '@/lib/utils';
@@ -43,6 +44,9 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [clearing,      setClearing]      = useState(false);
   const [confirmClear,  setConfirmClear]  = useState(false);
+  const [detalle,       setDetalle]       = useState<Registro | null>(null);
+  const [mounted,       setMounted]       = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   // Initialize filters from URL params (persisted across reloads/shares)
   const [search,     setSearch]     = useState(() => searchParams.get('q')   ?? '');
@@ -103,8 +107,91 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
     setConfirmClear(false);
   };
 
+  const detallePanel = detalle && mounted ? createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:justify-end" role="dialog" aria-modal="true">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDetalle(null)} />
+      {/* Panel lateral / bottom-sheet */}
+      <div className="relative w-full sm:w-[400px] sm:h-full bg-zinc-900 border-t sm:border-t-0 sm:border-l border-zinc-700/60 shadow-2xl flex flex-col max-h-[85vh] sm:max-h-full rounded-t-2xl sm:rounded-none">
+        {/* Header */}
+        <div className="flex items-start justify-between p-5 border-b border-zinc-800/60 shrink-0">
+          <div className="min-w-0 flex-1 pr-3">
+            <p className="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-1">Detalle del registro</p>
+            <p className="text-sm font-bold text-zinc-100 leading-snug">{detalle.descripcion}</p>
+            <p className="text-[11px] text-zinc-500 mt-0.5">{detalle.itemId} · {detalle.ubicacion}</p>
+          </div>
+          <button onClick={() => setDetalle(null)} className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-all shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Contenido scrollable */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {/* Auditor + fecha */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-zinc-800/50 border border-zinc-700/40 p-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <User size={11} className="text-zinc-500" />
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wide font-semibold">Auditor</span>
+              </div>
+              <p className="text-sm font-semibold text-zinc-200">{detalle.usuarioNombre}</p>
+            </div>
+            <div className="rounded-xl bg-zinc-800/50 border border-zinc-700/40 p-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Clock size={11} className="text-zinc-500" />
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wide font-semibold">Fecha y hora</span>
+              </div>
+              <p className="text-xs font-semibold text-zinc-200 leading-snug">
+                {new Date(detalle.escaneadoEn).toLocaleString('es-CO', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}
+              </p>
+            </div>
+          </div>
+
+          {/* Cantidades */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: 'Sistema',    value: detalle.stockSistema, color: 'text-zinc-300' },
+              { label: 'Contado',    value: detalle.cantidad,     color: 'text-zinc-100 font-black' },
+              { label: 'Diferencia', value: (detalle.cantidad - detalle.stockSistema > 0 ? '+' : '') + (detalle.cantidad - detalle.stockSistema),
+                color: detalle.cantidad === detalle.stockSistema ? 'text-zinc-400' : detalle.cantidad > detalle.stockSistema ? 'text-emerald-400' : 'text-red-400' },
+            ].map(q => (
+              <div key={q.label} className="rounded-xl bg-zinc-800/50 border border-zinc-700/40 p-3 text-center">
+                <p className={`text-xl font-black ${q.color}`}>{q.value}</p>
+                <p className="text-[10px] text-zinc-500 mt-0.5">{q.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Nota */}
+          <div className="rounded-xl bg-zinc-800/50 border border-zinc-700/40 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <MessageSquare size={13} className={detalle.nota ? 'text-amber-400' : 'text-zinc-600'} />
+              <span className="text-xs font-semibold text-zinc-400">Comentario del auditor</span>
+            </div>
+            {detalle.nota
+              ? <p className="text-sm text-amber-300/90 italic leading-relaxed">"{detalle.nota}"</p>
+              : <p className="text-xs text-zinc-600 italic">Sin comentario en este registro</p>}
+          </div>
+
+          {/* Foto */}
+          <div className="rounded-xl bg-zinc-800/50 border border-zinc-700/40 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Camera size={13} className={detalle.fotoUri ? 'text-sky-400' : 'text-zinc-600'} />
+              <span className="text-xs font-semibold text-zinc-400">Fotografía del conteo</span>
+            </div>
+            {detalle.fotoUri
+              ? <img src={detalle.fotoUri} alt="Foto del conteo" className="w-full rounded-xl object-cover max-h-60 border border-zinc-700/40" />
+              : <p className="text-xs text-zinc-600 italic">Sin foto en este registro</p>}
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  ) : null;
+
   return (
     <>
+      {detallePanel}
       {/* ── Filtros ── */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1">
@@ -219,10 +306,18 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
               </thead>
               <tbody className="divide-y divide-zinc-800/40">
                 {filtered.map(r => (
-                  <tr key={r.id} className="hover:bg-zinc-900/40 transition-colors group">
+                  <tr key={r.id} onClick={() => setDetalle(r)} className="hover:bg-zinc-900/40 transition-colors group cursor-pointer">
                     <td className="px-4 py-3">
-                      <p className="text-zinc-200 font-medium truncate max-w-[200px]">{r.descripcion}</p>
-                      <p className="text-[11px] text-zinc-500">{r.itemId}</p>
+                      <div className="flex items-center gap-2">
+                        <div className="min-w-0">
+                          <p className="text-zinc-200 font-medium truncate max-w-[200px]">{r.descripcion}</p>
+                          <p className="text-[11px] text-zinc-500">{r.itemId}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          {r.nota     && <MessageSquare size={11} className="text-amber-400" />}
+                          {r.fotoUri  && <Camera        size={11} className="text-sky-400"   />}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-zinc-400 hidden md:table-cell">{r.ubicacion}</td>
                     <td className="px-4 py-3 text-center text-zinc-300 font-mono">{r.stockSistema}</td>
@@ -231,7 +326,7 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
                     <td className="px-4 py-3 text-zinc-500 text-xs hidden lg:table-cell">{r.usuarioNombre}</td>
                     <td className="px-4 py-3 text-zinc-500 text-xs hidden lg:table-cell">{formatDate(r.escaneadoEn)}</td>
                     {canDelete && (
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                         {confirmDelete === r.id ? (
                           <div className="flex items-center gap-1.5">
                             <button
