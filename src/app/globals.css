@@ -447,7 +447,12 @@ body {
 .logo-icon-b { animation: iconSwap2 4s ease-in-out infinite; }
 .logo-letter {
   display: inline-block;
-  animation: letterWave 2.2s ease-in-out infinite;
+  animation: letterWave 2.2s ease-in-out infinite, gradientShift 5s ease infinite;
+  background: linear-gradient(135deg, #A78BFA, #6366F1, #C4B5FD, #A78BFA);
+  background-size: 250% 250%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .logo-orbit {
   position: absolute; top: 50%; left: 50%;

@@ -62,17 +62,7 @@ export function Sidebar({ user }: Props) {
         </div>
         {/* Wordmark: gradiente animado + cada letra ondea */}
         <div>
-          <div
-            className="text-sm font-black tracking-tight leading-none"
-            style={{
-              background: 'linear-gradient(135deg,#A78BFA,#6366F1,#C4B5FD,#A78BFA)',
-              backgroundSize: '250% 250%',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              animation: 'gradientShift 5s ease infinite',
-            }}
-          >
+          <div className="text-sm font-black tracking-tight leading-none">
             {'StockIQ'.split('').map((l, i) => (
               <span key={i} className="logo-letter" style={{ animationDelay: `${i * 0.08}s` }}>{l}</span>
             ))}
