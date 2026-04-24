@@ -40,10 +40,11 @@ const FILTROS = [
 ];
 
 interface Props {
-  rows:          ResultRow[];
-  tiendaNombre?: string;
-  tiendaId?:     string;
-  canEdit?:      boolean;
+  rows:            ResultRow[];
+  tiendaNombre?:   string;
+  tiendaId?:       string;
+  canEdit?:        boolean;
+  currentUserName?: string | null;
 }
 
 function buildPrintHTML(rows: ResultRow[], label: string, tiendaNombre: string | undefined, search: string): string {
@@ -124,7 +125,7 @@ function buildPrintHTML(rows: ResultRow[], label: string, tiendaNombre: string |
 </html>`;
 }
 
-export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit }: Props) {
+export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit, currentUserName }: Props) {
   const router       = useRouter();
   const searchParams = useSearchParams();
 
@@ -347,7 +348,7 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
                     {reg.fotoUri && (
                       <Image src={reg.fotoUri} alt="Foto del conteo" width={400} height={300} className="w-full rounded-lg max-h-40 object-cover border border-zinc-700/40" unoptimized />
                     )}
-                    {canEdit && (
+                    {canEdit && (!currentUserName || reg.usuarioNombre === currentUserName) && (
                       <button
                         onClick={e => { e.stopPropagation(); abrirEdit(detalleRow, reg); }}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-prp/15 border border-prp/30 text-vlt text-xs font-semibold hover:bg-prp/25 transition-all mt-1"
@@ -586,7 +587,7 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
                       {r.clsf === 'CERO'       && <Badge variant="warning">Cero</Badge>}
                       {r.clsf === 'NO_CONTADO' && <Badge>Pendiente</Badge>}
                     </td>
-                    {canEdit && (
+                    {canEdit && (!currentUserName || r.usuarioNombre === currentUserName) && (
                       <td className="px-2 py-3 text-center">
                         <button
                           onClick={e => { e.stopPropagation(); abrirEdit(r); }}

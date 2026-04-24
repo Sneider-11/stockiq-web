@@ -22,8 +22,14 @@ export default async function ResultadosPage({ params }: Props) {
   const tienda = tiendas.find(t => t.id === id);
   if (!tienda) notFound();
 
-  const canEdit = !!session && ['SUPERADMIN', 'ADMIN'].includes(session.rol) &&
+  // ADMIN/SUPERADMIN pueden editar cualquier registro.
+  // CONTADOR puede editar solo los suyos (el API también lo valida).
+  const isAdmin = !!session && ['SUPERADMIN', 'ADMIN'].includes(session.rol) &&
     (session.rol === 'SUPERADMIN' || session.tiendas.includes(id));
+  const isContador = !!session && session.rol === 'CONTADOR' && session.tiendas.includes(id);
+  const canEdit = isAdmin || isContador;
+  // null = puede editar todos; string = solo puede editar los suyos (CONTADOR)
+  const currentUserName: string | null = isContador ? (session?.nombre ?? null) : null;
 
   // Agrupar TODOS los registros por artículo — cada auditor puede tener su propio conteo
   const regsByItem = new Map<string, Registro[]>();
@@ -122,7 +128,7 @@ export default async function ResultadosPage({ params }: Props) {
           </Link>
         </div>
       ) : (
-        <ResultadosClient rows={rows} tiendaNombre={tienda.nombre} tiendaId={id} canEdit={canEdit} />
+        <ResultadosClient rows={rows} tiendaNombre={tienda.nombre} tiendaId={id} canEdit={canEdit} currentUserName={currentUserName} />
       )}
     </div>
   );
