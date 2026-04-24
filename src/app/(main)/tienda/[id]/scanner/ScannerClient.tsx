@@ -205,7 +205,7 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
   };
 
   const total      = catalogo.length;
-  const escaneados = registros.length;
+  const escaneados = new Set(registros.map(r => r.itemId)).size;
   const progreso   = total > 0 ? Math.round((escaneados / total) * 100) : 0;
   const progresoColor = progreso >= 80 ? '#10B981' : progreso >= 40 ? '#F59E0B' : '#EF4444';
 

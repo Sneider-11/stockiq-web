@@ -500,10 +500,22 @@ export async function dbGetTiendasConStats(): Promise<TiendaStats[]> {
     const regs = registrosByTienda.get(tienda.id) ?? [];
     const total = catalogoCount[tienda.id] ?? 0;
 
-    const faltantes    = regs.filter(r => r.clasificacion === 'FALTANTE');
-    const sobrantes    = regs.filter(r => r.clasificacion === 'SOBRANTE');
-    const sinDiferencia = regs.filter(r => r.clasificacion === 'SIN_DIF').length;
-    const ceros        = regs.filter(r => r.clasificacion === 'CERO').length;
+    // Deduplicar por itemId: si dos auditores escanearon el mismo artículo,
+    // cuenta como 1 artículo escaneado, no 2 registros.
+    const uniqueItemIds = new Set(regs.map(r => r.itemId));
+
+    // Para faltantes/sobrantes/etc., usar solo el registro más reciente por artículo
+    // (regs ya viene ordenado desc por escaneado_en desde dbGetRegistros)
+    const latestByItem = new Map<string, typeof regs[number]>();
+    for (const r of regs) {
+      if (!latestByItem.has(r.itemId)) latestByItem.set(r.itemId, r);
+    }
+    const latestRegs = [...latestByItem.values()];
+
+    const faltantes    = latestRegs.filter(r => r.clasificacion === 'FALTANTE');
+    const sobrantes    = latestRegs.filter(r => r.clasificacion === 'SOBRANTE');
+    const sinDiferencia = latestRegs.filter(r => r.clasificacion === 'SIN_DIF').length;
+    const ceros        = latestRegs.filter(r => r.clasificacion === 'CERO').length;
 
     const valorFaltante = faltantes.reduce(
       (acc, r) => acc + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0
@@ -515,8 +527,8 @@ export async function dbGetTiendasConStats(): Promise<TiendaStats[]> {
     return {
       tienda,
       totalCatalogo:  total,
-      totalRegistros: regs.length,
-      progreso:       total > 0 ? Math.round((regs.length / total) * 100) : 0,
+      totalRegistros: uniqueItemIds.size,
+      progreso:       total > 0 ? Math.round((uniqueItemIds.size / total) * 100) : 0,
       valorFaltante,
       valorSobrante,
       faltantes:      faltantes.length,
@@ -599,12 +611,21 @@ export async function dbSaveAuditoriaSnapshot(
   const tienda = tiendas.find(t => t.id === tiendaId);
   if (!tienda) return;
 
-  const total        = catalogo.length;
-  const faltantes    = registros.filter(r => r.clasificacion === 'FALTANTE');
-  const sobrantesReg = registros.filter(r => r.clasificacion === 'SOBRANTE');
-  const sinDif       = registros.filter(r => r.clasificacion === 'SIN_DIF');
-  const ceros        = registros.filter(r => r.clasificacion === 'CERO');
-  const progreso     = total > 0 ? Math.round((registros.length / total) * 100) : 0;
+  const total = catalogo.length;
+
+  // Deduplicar: usar solo el registro más reciente por artículo
+  const latestByItem = new Map<string, typeof registros[number]>();
+  for (const r of registros) {
+    if (!latestByItem.has(r.itemId)) latestByItem.set(r.itemId, r);
+  }
+  const latestRegs   = [...latestByItem.values()];
+  const uniqueItems  = latestByItem.size;
+
+  const faltantes    = latestRegs.filter(r => r.clasificacion === 'FALTANTE');
+  const sobrantesReg = latestRegs.filter(r => r.clasificacion === 'SOBRANTE');
+  const sinDif       = latestRegs.filter(r => r.clasificacion === 'SIN_DIF');
+  const ceros        = latestRegs.filter(r => r.clasificacion === 'CERO');
+  const progreso     = total > 0 ? Math.round((uniqueItems / total) * 100) : 0;
   const valorFaltante = faltantes.reduce(
     (a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0,
   );
@@ -617,7 +638,7 @@ export async function dbSaveAuditoriaSnapshot(
     tienda_nombre:   tienda.nombre,
     cerrado_por:     cerradoPor,
     total_catalogo:  total,
-    total_registros: registros.length,
+    total_registros: uniqueItems,
     progreso,
     valor_faltante:  valorFaltante,
     valor_sobrante:  valorSobrante,
