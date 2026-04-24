@@ -17,6 +17,13 @@ import type { Registro } from '@/types';
 
 interface Props { params: Promise<{ id: string }> }
 
+const CLSF_COLOR: Record<string, string> = {
+  SIN_DIF:  '#7C3AED',
+  FALTANTE: '#EF4444',
+  SOBRANTE: '#10B981',
+  CERO:     '#F59E0B',
+};
+
 function ClasificacionBadge({ clsf }: { clsf: Registro['clasificacion'] }) {
   const map = {
     SIN_DIF:  <Badge variant="purple">Sin diferencia</Badge>,
@@ -176,7 +183,7 @@ export default async function TiendaPage({ params }: Props) {
       </div>
 
       {/* ── Progress bar ── */}
-      <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/60 p-5 mb-5 anim-fade-up" style={{ animationDelay: '50ms' }}>
+      <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/60 p-5 mb-5 anim-fade-up scan-sweep" style={{ animationDelay: '50ms' }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <ScanLine size={16} className="text-zinc-400" />
@@ -267,7 +274,7 @@ export default async function TiendaPage({ params }: Props) {
 
       {/* ── Quick links ── */}
       <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">Acciones</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
         {quickLinks.map((link, i) => (
           <Link
             key={link.href}
@@ -308,7 +315,10 @@ export default async function TiendaPage({ params }: Props) {
               <div
                 key={r.id}
                 className="flex items-center gap-3 rounded-xl bg-zinc-900/40 border border-zinc-800/40 px-4 py-3 hover:bg-zinc-900/70 hover:border-zinc-700/60 transition-all duration-200 anim-fade-up"
-                style={{ animationDelay: `${i * 40 + 300}ms` }}
+                style={{
+                  animationDelay: `${i * 40 + 300}ms`,
+                  borderLeft: `3px solid ${CLSF_COLOR[r.clasificacion] ?? '#52525B'}`,
+                }}
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-zinc-100 font-medium truncate">{r.descripcion}</p>

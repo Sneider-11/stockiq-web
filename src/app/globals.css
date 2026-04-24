@@ -197,6 +197,24 @@ body {
   50%       { border-color: rgba(124,58,237,0.60); }
 }
 
+/* ── Scanner sweep line ─────────────────────────────── */
+@keyframes scanSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── Grid pulse ─────────────────────────────────────── */
+@keyframes gridPulse {
+  0%, 100% { opacity: 0.08; }
+  50%       { opacity: 0.15; }
+}
+
+/* ── Bar rise ───────────────────────────────────────── */
+@keyframes barRise {
+  0%   { height: 0; opacity: 0; }
+  100% { opacity: 1; }
+}
+
 /* ══════════════════════════════════════════════════════════
    CLASES DE ANIMACIÓN DE ENTRADA
    will-change solo en entradas puntuales, nunca en page-transition
@@ -369,6 +387,39 @@ body {
 /* ── Login — glows ambientales ──────────────────────── */
 .login-glow-1 { animation: glowDrift  14s ease-in-out infinite; }
 .login-glow-2 { animation: glowDrift2 18s ease-in-out infinite; }
+
+/* ── Nova grid ──────────────────────────────────────── */
+.nova-grid {
+  background-image:
+    linear-gradient(rgba(124,58,237,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,58,237,0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: gridPulse 6s ease-in-out infinite;
+}
+
+/* ── Scan sweep overlay ─────────────────────────────── */
+.scan-sweep { position: relative; overflow: hidden; }
+.scan-sweep::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(167,139,250,0.10), transparent);
+  animation: scanSweep 3.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Aurora ambient ─────────────────────────────────── */
+.aurora {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background:
+    radial-gradient(600px 400px at 10% 30%, rgba(124,58,237,0.10), transparent 60%),
+    radial-gradient(500px 350px at 82% 72%, rgba(79,70,229,0.08), transparent 60%);
+  filter: blur(40px);
+  animation: glowDrift 14s ease-in-out infinite;
+}
 
 /* ══════════════════════════════════════════════════════════
    MICRO-INTERACCIONES GLOBALES

@@ -221,7 +221,7 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
       )}
 
       {/* ── Progreso rápido ── */}
-      <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/40 px-5 py-4">
+      <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/40 px-5 py-4 scan-sweep">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wide">Progreso de conteo</span>
           <div className="flex items-center gap-2">
