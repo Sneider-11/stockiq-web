@@ -191,6 +191,51 @@ body {
   70%        { transform: translate(18px, -10px) scale(0.97); opacity: 0.04; }
 }
 
+/* ── Logo tile ──────────────────────────────────────── */
+@keyframes tiltSpin {
+  0%   { transform: rotate(0deg)  scale(1);    }
+  25%  { transform: rotate(-6deg) scale(1.05); }
+  50%  { transform: rotate(0deg)  scale(1.08); }
+  75%  { transform: rotate(6deg)  scale(1.05); }
+  100% { transform: rotate(0deg)  scale(1);    }
+}
+
+@keyframes glowBreathe {
+  0%, 100% { box-shadow: 0 4px 14px rgba(124,58,237,0.35), 0 0 0 0    rgba(124,58,237,0.45); }
+  50%       { box-shadow: 0 8px 24px rgba(124,58,237,0.60), 0 0 0 10px rgba(124,58,237,0); }
+}
+
+@keyframes scanLine {
+  0%   { transform: translateY(-120%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(120%);  opacity: 0; }
+}
+
+@keyframes iconSwap {
+  0%, 40%  { opacity: 1; transform: translateY(0)    scale(1);  }
+  50%, 90% { opacity: 0; transform: translateY(-6px) scale(.7); }
+  100%     { opacity: 1; transform: translateY(0)    scale(1);  }
+}
+
+@keyframes iconSwap2 {
+  0%, 40%  { opacity: 0; transform: translateY(6px) scale(.7); }
+  50%, 90% { opacity: 1; transform: translateY(0)   scale(1);  }
+  100%     { opacity: 0; transform: translateY(6px) scale(.7); }
+}
+
+@keyframes letterWave {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-3px); }
+}
+
+@keyframes orbit {
+  0%   { transform: rotate(0deg)   translateX(28px) rotate(0deg);   opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: rotate(360deg) translateX(28px) rotate(-360deg); opacity: 0; }
+}
+
 /* ── Border glow ────────────────────────────────────── */
 @keyframes borderGlow {
   0%, 100% { border-color: rgba(124,58,237,0.25); }
@@ -387,6 +432,30 @@ body {
 /* ── Login — glows ambientales ──────────────────────── */
 .login-glow-1 { animation: glowDrift  14s ease-in-out infinite; }
 .login-glow-2 { animation: glowDrift2 18s ease-in-out infinite; }
+
+/* ── Logo animado ───────────────────────────────────── */
+.logo-tile {
+  animation: tiltSpin 5s cubic-bezier(.5,0,.5,1) infinite,
+             glowBreathe 3.2s ease-in-out infinite;
+}
+.logo-scan {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,0.28), transparent);
+  animation: scanLine 3s ease-in-out infinite;
+}
+.logo-icon-a { animation: iconSwap  4s ease-in-out infinite; }
+.logo-icon-b { animation: iconSwap2 4s ease-in-out infinite; }
+.logo-letter {
+  display: inline-block;
+  animation: letterWave 2.2s ease-in-out infinite;
+}
+.logo-orbit {
+  position: absolute; top: 50%; left: 50%;
+  width: 6px; height: 6px; margin: -3px; border-radius: 9999px;
+}
+.logo-orbit-1 { background: #A78BFA; box-shadow: 0 0 8px #A78BFA; animation: orbit 4s linear infinite; }
+.logo-orbit-2 { background: #C4B5FD; box-shadow: 0 0 8px #C4B5FD; animation: orbit 4s linear infinite; animation-delay: -1.3s; }
+.logo-orbit-3 { background: #60A5FA; box-shadow: 0 0 6px #60A5FA; animation: orbit 4s linear infinite; animation-delay: -2.6s; }
 
 /* ── Nova grid ──────────────────────────────────────── */
 .nova-grid {

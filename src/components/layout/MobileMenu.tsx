@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import {
   X, LayoutDashboard, Users, Store, User,
-  LogOut, Layers, BarChart3, ChevronRight, Building2,
+  LogOut, Layers, Boxes, BarChart3, ChevronRight, Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SessionUser } from '@/types';
@@ -53,11 +53,37 @@ export function MobileMenu({ user, onClose }: Props) {
         {/* Logo + close */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-zinc-800/60 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-prp to-ind flex items-center justify-center shadow-lg shadow-prp/30 float">
-              <Layers size={16} className="text-white" aria-hidden="true" />
+            <div className="relative w-8 h-8 shrink-0">
+              <div className="logo-tile w-8 h-8 rounded-xl bg-gradient-to-br from-prp to-ind flex items-center justify-center overflow-hidden relative">
+                <div className="logo-scan" />
+                <span className="logo-icon-a absolute inset-0 flex items-center justify-center">
+                  <Layers size={16} className="text-white" aria-hidden="true" />
+                </span>
+                <span className="logo-icon-b absolute inset-0 flex items-center justify-center">
+                  <Boxes size={16} className="text-white" aria-hidden="true" />
+                </span>
+              </div>
+              <span className="logo-orbit logo-orbit-1" />
+              <span className="logo-orbit logo-orbit-2" />
+              <span className="logo-orbit logo-orbit-3" />
             </div>
             <div>
-              <span id="mobile-menu-title" className="text-sm font-black text-white tracking-tight gradient-text">StockIQ</span>
+              <div
+                id="mobile-menu-title"
+                className="text-sm font-black tracking-tight leading-none"
+                style={{
+                  background: 'linear-gradient(135deg,#A78BFA,#6366F1,#C4B5FD,#A78BFA)',
+                  backgroundSize: '250% 250%',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  animation: 'gradientShift 5s ease infinite',
+                }}
+              >
+                {'StockIQ'.split('').map((l, i) => (
+                  <span key={i} className="logo-letter" style={{ animationDelay: `${i * 0.08}s` }}>{l}</span>
+                ))}
+              </div>
               <span className="block text-[10px] text-zinc-500 -mt-0.5">Plataforma Web</span>
             </div>
           </div>

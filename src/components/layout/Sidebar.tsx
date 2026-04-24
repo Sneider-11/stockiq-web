@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Users, Store, User, LogOut,
-  ChevronRight, Layers, BarChart3, Building2,
+  ChevronRight, Layers, Boxes, BarChart3, Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SessionUser } from '@/types';
@@ -45,11 +45,38 @@ export function Sidebar({ user }: Props) {
     <aside className="flex flex-col w-64 h-full bg-zinc-950 border-r border-zinc-800/60 shrink-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 h-16 border-b border-zinc-800/60 shrink-0 anim-fade-in">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-prp to-ind flex items-center justify-center shadow-lg shadow-prp/30 hover:shadow-prp/50 transition-shadow float">
-          <Layers size={16} className="text-white" />
+        {/* Tile animado: tiltSpin + glowBreathe + scanLine + iconSwap + partículas */}
+        <div className="relative w-8 h-8 shrink-0">
+          <div className="logo-tile w-8 h-8 rounded-xl bg-gradient-to-br from-prp to-ind flex items-center justify-center overflow-hidden relative">
+            <div className="logo-scan" />
+            <span className="logo-icon-a absolute inset-0 flex items-center justify-center">
+              <Layers size={16} className="text-white" />
+            </span>
+            <span className="logo-icon-b absolute inset-0 flex items-center justify-center">
+              <Boxes size={16} className="text-white" />
+            </span>
+          </div>
+          <span className="logo-orbit logo-orbit-1" />
+          <span className="logo-orbit logo-orbit-2" />
+          <span className="logo-orbit logo-orbit-3" />
         </div>
+        {/* Wordmark: gradiente animado + cada letra ondea */}
         <div>
-          <span className="text-sm font-black text-white tracking-tight gradient-text">StockIQ</span>
+          <div
+            className="text-sm font-black tracking-tight leading-none"
+            style={{
+              background: 'linear-gradient(135deg,#A78BFA,#6366F1,#C4B5FD,#A78BFA)',
+              backgroundSize: '250% 250%',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              animation: 'gradientShift 5s ease infinite',
+            }}
+          >
+            {'StockIQ'.split('').map((l, i) => (
+              <span key={i} className="logo-letter" style={{ animationDelay: `${i * 0.08}s` }}>{l}</span>
+            ))}
+          </div>
           <span className="block text-[10px] text-zinc-500 -mt-0.5">Plataforma Web</span>
         </div>
       </div>
