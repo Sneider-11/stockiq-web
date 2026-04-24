@@ -185,7 +185,7 @@ function DashboardKPIs({ stats }: { stats: TiendaStats[] }) {
 
       {/* KPI 1 — Precisión de inventario */}
       <div
-        className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-5 relative overflow-hidden hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up"
+        className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-5 relative overflow-hidden hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up scan-sweep"
         style={{ animationDelay: '0ms' }}
       >
         <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-violet-600 to-transparent" />
@@ -204,7 +204,7 @@ function DashboardKPIs({ stats }: { stats: TiendaStats[] }) {
 
       {/* KPI 2 — Diferencia neta */}
       <div
-        className={`rounded-2xl border bg-zinc-900/50 p-5 relative overflow-hidden hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up ${
+        className={`rounded-2xl border bg-zinc-900/50 p-5 relative overflow-hidden hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up scan-sweep ${
           diferenciaNeta >= 0 ? 'border-emerald-900/40 hover:border-emerald-800/60' : 'border-red-900/40 hover:border-red-800/60'
         }`}
         style={{ animationDelay: '60ms' }}
@@ -238,7 +238,7 @@ function DashboardKPIs({ stats }: { stats: TiendaStats[] }) {
 
       {/* KPI 3 — Índice de cumplimiento */}
       <div
-        className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-5 relative overflow-hidden hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up"
+        className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-5 relative overflow-hidden hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up scan-sweep"
         style={{ animationDelay: '120ms' }}
       >
         <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-sky-600 to-transparent" />
@@ -257,7 +257,7 @@ function DashboardKPIs({ stats }: { stats: TiendaStats[] }) {
 
       {/* KPI 4 — Exposición al riesgo */}
       <div
-        className={`rounded-2xl border bg-zinc-900/50 p-5 relative overflow-hidden hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up ${
+        className={`rounded-2xl border bg-zinc-900/50 p-5 relative overflow-hidden hover:bg-zinc-900/80 transition-all duration-200 anim-fade-up scan-sweep ${
           totalFaltante > 0 ? 'border-red-900/40 hover:border-red-800/60' : 'border-zinc-800/70 hover:border-zinc-700'
         }`}
         style={{ animationDelay: '180ms' }}

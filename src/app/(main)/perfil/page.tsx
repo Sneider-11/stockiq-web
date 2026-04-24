@@ -52,7 +52,7 @@ export default async function PerfilPage() {
       <h1 className="text-2xl font-black text-zinc-100 tracking-tight mb-6">Mi Perfil</h1>
 
       {/* ── Avatar + nombre ── */}
-      <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/60 p-6 mb-4 anim-fade-up" style={{ animationDelay: '40ms' }}>
+      <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/60 p-6 mb-4 anim-fade-up relative overflow-hidden scan-sweep" style={{ animationDelay: '40ms' }}>
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-prp to-ind flex items-center justify-center text-white text-xl font-black shadow-lg shadow-prp/30 shrink-0 float">
             {initials}
