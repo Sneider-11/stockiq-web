@@ -8,6 +8,7 @@ import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { DescargarTiendaBtn } from '@/components/ui/DescargarTiendaBtn';
 import { ReiniciarBtn } from '@/components/ui/ReiniciarBtn';
 import { CerrarInventarioBtn } from '@/components/ui/CerrarInventarioBtn';
+import { AutoRefresh } from '@/components/ui/AutoRefresh';
 import {
   ArrowLeft, Boxes, TrendingDown, TrendingUp,
   CheckCircle2, BarChart2, Upload, ClipboardList,
@@ -46,16 +47,34 @@ export default async function TiendaPage({ params }: Props) {
   const tienda = tiendas.find(t => t.id === id);
   if (!tienda) notFound();
 
-  const total    = catalogo.length;
-  const progreso = total > 0 ? Math.round((registros.length / total) * 100) : 0;
+  const total = catalogo.length;
 
-  const faltantes      = registros.filter(r => r.clasificacion === 'FALTANTE');
-  const sobrReg        = registros.filter(r => r.clasificacion === 'SOBRANTE');
-  const sinDif         = registros.filter(r => r.clasificacion === 'SIN_DIF');
-  const ceros          = registros.filter(r => r.clasificacion === 'CERO');
+  // Deduplicar por itemId (registros viene desc por escaneado_en desde la BD)
+  // Si dos auditores escanearon el mismo artículo, solo cuenta el más reciente.
+  const latestByItem = new Map<string, Registro>();
+  for (const r of registros) {
+    if (!latestByItem.has(r.itemId)) latestByItem.set(r.itemId, r);
+  }
+  const latestRegs = [...latestByItem.values()];
+  const progreso   = total > 0 ? Math.round((latestByItem.size / total) * 100) : 0;
+
+  const faltantes     = latestRegs.filter(r => r.clasificacion === 'FALTANTE');
+  const sobrReg       = latestRegs.filter(r => r.clasificacion === 'SOBRANTE');
+  const sinDifUnicos  = latestRegs.filter(r => r.clasificacion === 'SIN_DIF');
+  const cerosContados = latestRegs.filter(r => r.clasificacion === 'CERO');
+
+  // CEROS = artículos explícitamente contados como 0 + artículos del catálogo
+  // que aún no tienen ningún registro (aún no fueron escaneados).
+  const escaneadosSet = new Set(registros.map(r => r.itemId));
+  const noContados    = catalogo.filter(a => !escaneadosSet.has(a.itemId));
+  const totalCerosN   = cerosContados.length + noContados.length;
+
   const valorFaltante     = faltantes.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
-  const valorSobrante     = sobrReg.reduce((a, r)   => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
+  const valorSobrante     = sobrReg.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
   const valorSobrSinStock = sobrantes.reduce((a, s) => a + s.precio * s.cantidad, 0);
+  const valorSinDif       = sinDifUnicos.reduce((a, r) => a + r.cantidad * r.costoUnitario, 0);
+  const valorCeros        = cerosContados.reduce((a, r) => a + r.stockSistema * r.costoUnitario, 0)
+                          + noContados.reduce((a, x) => a + x.stock * x.costo, 0);
 
   const barColor =
     progreso >= 80 ? '#10B981' :
@@ -128,6 +147,7 @@ export default async function TiendaPage({ params }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto page-enter">
+      <AutoRefresh interval={15_000} />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-[11px] text-zinc-600 mb-4" aria-label="Breadcrumb">
         <Link href="/" className="flex items-center gap-1 hover:text-zinc-400 transition-colors">
@@ -203,8 +223,8 @@ export default async function TiendaPage({ params }: Props) {
           />
         </div>
         <div className="flex justify-between text-xs text-zinc-500">
-          <span>{registros.length} artículos escaneados</span>
-          <span>{total > 0 ? `${total - registros.length} pendientes` : 'Sin catálogo cargado'}</span>
+          <span>{latestByItem.size} artículos escaneados</span>
+          <span>{total > 0 ? `${total - latestByItem.size} pendientes` : 'Sin catálogo cargado'}</span>
         </div>
       </div>
 
@@ -213,10 +233,12 @@ export default async function TiendaPage({ params }: Props) {
         {[
           {
             label: 'Sin diferencia',
-            value: sinDif.length,
+            value: sinDifUnicos.length,
             icon: <CheckCircle2 size={16} />,
             color: 'text-purple-400',
             bg: 'bg-purple-950/40 border-purple-800/50 hover:border-purple-700/70',
+            sub: valorSinDif,
+            subFormat: 'cop' as const,
           },
           {
             label: 'Faltantes',
@@ -238,10 +260,12 @@ export default async function TiendaPage({ params }: Props) {
           },
           {
             label: 'Ceros',
-            value: ceros.length,
+            value: totalCerosN,
             icon: <AlertTriangle size={16} />,
             color: 'text-amber-400',
             bg: 'bg-amber-950/40 border-amber-800/50 hover:border-amber-700/70',
+            sub: valorCeros,
+            subFormat: 'cop' as const,
           },
           {
             label: 'Sobr. s/stock',
