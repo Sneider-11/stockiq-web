@@ -50,6 +50,11 @@ export default function RegistrosClient({ initialRegistros, tiendaId, canDelete,
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
 
+  // Sincronizar cuando el Server Component entrega datos frescos tras router.refresh()
+  useEffect(() => {
+    setRegistros(initialRegistros);
+  }, [initialRegistros]);
+
   // Initialize filters from URL params (persisted across reloads/shares)
   const [search,     setSearch]     = useState(() => searchParams.get('q')   ?? '');
   const [filtroClsf, setFiltroClsf] = useState(() => searchParams.get('clf') ?? '');

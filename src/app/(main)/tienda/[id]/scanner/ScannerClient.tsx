@@ -71,6 +71,12 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
     return () => clearInterval(id);
   }, [pending, router]);
 
+  // Sincronizar estado local cuando el Server Component entrega datos frescos
+  // (después de cada router.refresh() los props cambian pero useState no se reinicializa)
+  useEffect(() => {
+    setRegistros(registrosIniciales);
+  }, [registrosIniciales]);
+
   // El input de barcode debe estar siempre enfocado (salvo cuando se confirma cantidad)
   useEffect(() => {
     if (!pending) barcodeRef.current?.focus();

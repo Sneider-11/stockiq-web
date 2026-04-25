@@ -118,13 +118,20 @@ export default function ReporteClient({
   const setFirmante = (i: number, v: string) => setFirmantes(p => p.map((f, idx) => idx === i ? v : f));
 
   // ── Cálculos ─────────────────────────────────────────────────────────────────
-  const faltantesArr  = registros.filter(r => r.clasificacion === 'FALTANTE');
-  const sobrantesArr  = registros.filter(r => r.clasificacion === 'SOBRANTE');
-  const sinDifArr     = registros.filter(r => r.clasificacion === 'SIN_DIF');
-  const cerosArr      = registros.filter(r => r.clasificacion === 'CERO');
+  // Deduplicar por itemId (registros viene desc por escaneado_en desde la BD)
+  const latestByItem = new Map<string, Registro>();
+  for (const r of registros) {
+    if (!latestByItem.has(r.itemId)) latestByItem.set(r.itemId, r);
+  }
+  const latestRegs = [...latestByItem.values()];
 
-  const pct      = totalCatalogo > 0 ? (registros.length / totalCatalogo) * 100 : 0;
-  const faltPct  = totalCatalogo > 0 ? (faltantesArr.length / totalCatalogo) * 100 : 0;
+  const faltantesArr  = latestRegs.filter(r => r.clasificacion === 'FALTANTE');
+  const sobrantesArr  = latestRegs.filter(r => r.clasificacion === 'SOBRANTE');
+  const sinDifArr     = latestRegs.filter(r => r.clasificacion === 'SIN_DIF');
+  const cerosArr      = latestRegs.filter(r => r.clasificacion === 'CERO');
+
+  const pct     = totalCatalogo > 0 ? (latestByItem.size / totalCatalogo) * 100 : 0;
+  const faltPct = totalCatalogo > 0 ? (faltantesArr.length / totalCatalogo) * 100 : 0;
 
   const valorFaltante        = faltantesArr.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
   const valorSobrante        = sobrantesArr.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0);
@@ -253,8 +260,8 @@ export default function ReporteClient({
                 />
               </div>
               <div className="flex justify-between text-xs text-zinc-500">
-                <span>{registros.length} escaneados</span>
-                <span>{Math.max(0, totalCatalogo - registros.length)} pendientes</span>
+                <span>{latestByItem.size} escaneados</span>
+                <span>{Math.max(0, totalCatalogo - latestByItem.size)} pendientes</span>
               </div>
             </div>
           </div>
@@ -631,7 +638,7 @@ export default function ReporteClient({
                   </p>
                   <p className="text-[10px] text-zinc-500 mt-2 print:text-zinc-600">Progreso del conteo</p>
                   <p className={cn('text-lg font-black', pct >= 80 ? 'text-emerald-400' : pct >= 40 ? 'text-amber-400' : 'text-red-400', 'print:text-black')}>
-                    {Math.round(pct)}% ({registros.length}/{totalCatalogo})
+                    {Math.round(pct)}% ({latestByItem.size}/{totalCatalogo})
                   </p>
                 </div>
               </div>

@@ -195,16 +195,24 @@ export default function ConsolidadoClient({ tiendas, registros }: Props) {
   const sections = useMemo<Section[]>(() => {
     return tiendas
       .map(tienda => {
-        const regs      = filtered.filter(r => r.tiendaId === tienda.id);
-        const faltRegs  = regs.filter(r => r.clasificacion === 'FALTANTE');
-        const sobrRegs  = regs.filter(r => r.clasificacion === 'SOBRANTE');
+        const regs = filtered.filter(r => r.tiendaId === tienda.id);
+
+        // Deduplicar por itemId para los conteos (filtered ya viene desc por escaneado_en)
+        const latestByItem = new Map<string, Registro>();
+        for (const r of regs) {
+          if (!latestByItem.has(r.itemId)) latestByItem.set(r.itemId, r);
+        }
+        const latestRegs = [...latestByItem.values()];
+
+        const faltRegs  = latestRegs.filter(r => r.clasificacion === 'FALTANTE');
+        const sobrRegs  = latestRegs.filter(r => r.clasificacion === 'SOBRANTE');
         return {
           tienda,
           regs,
-          faltantes:    faltRegs.length,
-          sobrantes:    sobrRegs.length,
-          sinDif:       regs.filter(r => r.clasificacion === 'SIN_DIF').length,
-          ceros:        regs.filter(r => r.clasificacion === 'CERO').length,
+          faltantes:     faltRegs.length,
+          sobrantes:     sobrRegs.length,
+          sinDif:        latestRegs.filter(r => r.clasificacion === 'SIN_DIF').length,
+          ceros:         latestRegs.filter(r => r.clasificacion === 'CERO').length,
           valorFaltante: faltRegs.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0),
           valorSobrante: sobrRegs.reduce((a, r) => a + Math.abs(r.cantidad - r.stockSistema) * r.costoUnitario, 0),
         };
