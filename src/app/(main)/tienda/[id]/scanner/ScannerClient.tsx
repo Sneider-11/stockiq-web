@@ -260,7 +260,7 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
       {/* ── Panel principal de escaneo ── */}
       <div
         className={cn(
-          'rounded-2xl border p-6 transition-all duration-200 cursor-text relative overflow-hidden',
+          'rounded-2xl border p-6 transition-all duration-200 cursor-text relative',
           pending
             ? 'border-violet-700/60 bg-violet-950/20'
             : notFound
@@ -271,7 +271,7 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
         )}
         onClick={refocusScan}
       >
-        {!pending && !notFound && <div className="nova-grid" />}
+        {!pending && !notFound && <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none"><div className="nova-grid w-full h-full" /></div>}
         {/* Estado: esperando escaneo */}
         {!pending && !notFound && (
           <div className="space-y-5">
