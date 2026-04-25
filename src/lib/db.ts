@@ -474,12 +474,34 @@ export async function dbGetGruposConStats(
 
 // ─── ESTADÍSTICAS (calculadas) ────────────────────────────────────────────────
 
+type RegistroStats = {
+  tiendaId:      string;
+  itemId:        string;
+  clasificacion: string;
+  cantidad:      number;
+  stockSistema:  number;
+  costoUnitario: number;
+};
+
 export async function dbGetTiendasConStats(): Promise<TiendaStats[]> {
-  const [tiendas, registros, catalogosRaw] = await Promise.all([
+  // Solo traemos las columnas necesarias para calcular estadísticas —
+  // evita transferir descripcion, nota, foto_uri, etc. a medida que crece la tabla.
+  const [tiendas, registrosRaw, catalogosRaw] = await Promise.all([
     dbGetTiendas(),
-    dbGetRegistros(),
+    (supabase.from('registros') as any)
+      .select('tienda_id,item_id,clasificacion,cantidad,stock_sistema,costo_unitario,escaneado_en')
+      .order('escaneado_en', { ascending: false }),
     (supabase.from('catalogos') as any).select('tienda_id'),
   ]);
+
+  const registros: RegistroStats[] = ((registrosRaw.data ?? []) as any[]).map(r => ({
+    tiendaId:      r.tienda_id,
+    itemId:        r.item_id,
+    clasificacion: r.clasificacion,
+    cantidad:      r.cantidad,
+    stockSistema:  r.stock_sistema,
+    costoUnitario: r.costo_unitario,
+  }));
 
   const catalogoCount: Record<string, number> = {};
   if (catalogosRaw.data) {
@@ -489,7 +511,7 @@ export async function dbGetTiendasConStats(): Promise<TiendaStats[]> {
   }
 
   // Build a Map for O(1) lookup instead of O(n) filter per tienda
-  const registrosByTienda = new Map<string, typeof registros>();
+  const registrosByTienda = new Map<string, RegistroStats[]>();
   for (const r of registros) {
     const list = registrosByTienda.get(r.tiendaId) ?? [];
     list.push(r);
