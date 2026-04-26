@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { dbGetTiendas, dbGetCatalogo, dbGetRegistros } from '@/lib/db';
+import { getSession } from '@/lib/auth';
 import { ArrowLeft, ScanLine } from 'lucide-react';
 import ScannerClient from './ScannerClient';
 
@@ -10,10 +11,11 @@ interface Props { params: Promise<{ id: string }> }
 
 export default async function ScannerPage({ params }: Props) {
   const { id } = await params;
-  const [tiendas, catalogo, registros] = await Promise.all([
+  const [tiendas, catalogo, registros, session] = await Promise.all([
     dbGetTiendas(),
     dbGetCatalogo(id),
     dbGetRegistros(id),
+    getSession(),
   ]);
 
   const tienda = tiendas.find(t => t.id === id);
@@ -49,6 +51,7 @@ export default async function ScannerPage({ params }: Props) {
         tiendaColor={tienda.color}
         catalogo={catalogo}
         registrosIniciales={registros}
+        currentUserNombre={session?.nombre ?? null}
       />
     </div>
   );

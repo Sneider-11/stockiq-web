@@ -15,6 +15,7 @@ interface Props {
   tiendaColor:        string;
   catalogo:           Articulo[];
   registrosIniciales: Registro[];
+  currentUserNombre?: string | null;
 }
 
 interface ScanResult {
@@ -37,7 +38,7 @@ function clasificar(stock: number, cantidad: number): Clasificacion {
   return 'FALTANTE';
 }
 
-export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registrosIniciales }: Props) {
+export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registrosIniciales, currentUserNombre }: Props) {
   const router = useRouter();
   const [barcode,      setBarcode]      = useState('');
   const [cantidad,     setCantidad]     = useState('1');
@@ -116,7 +117,10 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
     setBarcode(a.itemId);
     setPending(a);
     setNotFound(false);
-    setCantidad('1');
+    const miReg = currentUserNombre
+      ? registros.find(r => r.itemId === a.itemId && r.usuarioNombre === currentUserNombre)
+      : null;
+    setCantidad(miReg ? String(miReg.cantidad) : '1');
   };
 
   // Cuando el barcode gun presiona Enter (o el usuario pulsa Enter)
@@ -129,7 +133,10 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
       setSuggestions([]);
       setPending(articulo);
       setNotFound(false);
-      setCantidad('1');
+      const miReg = currentUserNombre
+        ? registros.find(r => r.itemId === articulo.itemId && r.usuarioNombre === currentUserNombre)
+        : null;
+      setCantidad(miReg ? String(miReg.cantidad) : '1');
     } else {
       setSuggestions([]);
       setNotFound(true);
@@ -187,10 +194,11 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
         timestamp: Date.now(),
       };
       setRecent(prev => [result, ...prev].slice(0, 30));
-      // Reemplazar por itemId para no acumular duplicados en el estado local
+      // Reemplazar solo el registro del usuario actual para preservar conteos de otros auditores
       setRegistros(prev => {
-        const sinAnterior = prev.filter(r => r.itemId !== (json.registro as Registro).itemId);
-        return [json.registro as Registro, ...sinAnterior];
+        const saved = json.registro as Registro;
+        const sinMiAnterior = prev.filter(r => !(r.itemId === saved.itemId && r.usuarioNombre === saved.usuarioNombre));
+        return [saved, ...sinMiAnterior];
       });
       triggerFlash('ok');
     } catch {
@@ -369,24 +377,59 @@ export default function ScannerClient({ tiendaId, tiendaColor, catalogo, registr
               </div>
             </div>
 
-            {/* Preview clasificación en tiempo real */}
+            {/* Conteos actuales de otros auditores */}
+            {(() => {
+              const regsForItem = registros.filter(r => r.itemId === pending.itemId);
+              if (regsForItem.length === 0) return null;
+              const totalActual = regsForItem.reduce((s, r) => s + r.cantidad, 0);
+              return (
+                <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/60 p-3 space-y-1.5">
+                  <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wide mb-2">Conteos registrados</p>
+                  {regsForItem.map(r => (
+                    <div key={r.id} className="flex items-center gap-2">
+                      <span className="text-[11px] text-zinc-300 flex-1 truncate">
+                        {r.usuarioNombre}
+                        {r.usuarioNombre === currentUserNombre
+                          ? <span className="text-violet-400"> (tú)</span>
+                          : null}
+                      </span>
+                      <span className="text-[11px] font-bold text-zinc-200">{r.cantidad} und.</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2 pt-1.5 border-t border-zinc-800/60 mt-1">
+                    <span className="text-[10px] text-zinc-500 uppercase font-semibold flex-1">Total actual</span>
+                    <span className="text-xs font-black text-zinc-100">{totalActual} und.</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Preview clasificación en tiempo real (considera conteos de otros auditores) */}
             {(() => {
               const qty = parseInt(cantidad, 10);
-              const clf = isNaN(qty) || qty < 0 ? null : clasificar(pending.stock, qty);
-              const cfg = clf ? CLF_CONFIG[clf] : null;
-              return cfg ? (
+              if (isNaN(qty) || qty < 0) return null;
+              const otrosRegs  = registros.filter(r => r.itemId === pending.itemId && r.usuarioNombre !== currentUserNombre);
+              const otrosTotal = otrosRegs.reduce((s, r) => s + r.cantidad, 0);
+              const effective  = otrosTotal + qty;
+              const clf = clasificar(pending.stock, effective);
+              const cfg = CLF_CONFIG[clf];
+              const dif = effective - pending.stock;
+              return (
                 <div className={cn('flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800/40 border border-zinc-700/40')}>
                   <span className={cfg.color}>{cfg.icon}</span>
                   <span className={cn('text-xs font-bold', cfg.color)}>{cfg.label}</span>
-                  {!isNaN(qty) && qty !== pending.stock && (
+                  {dif !== 0 && (
                     <span className="text-xs text-zinc-500 ml-auto">
-                      Diferencia: <span className={cn('font-bold', qty < pending.stock ? 'text-red-400' : 'text-emerald-400')}>
-                        {qty - pending.stock > 0 ? '+' : ''}{qty - pending.stock}
+                      Diferencia: <span className={cn('font-bold', dif < 0 ? 'text-red-400' : 'text-emerald-400')}>
+                        {dif > 0 ? '+' : ''}{dif}
                       </span>
                     </span>
                   )}
+                  {otrosTotal > 0 && (
+                    <span className="text-[10px] text-zinc-600 shrink-0">({qty} + {otrosTotal} otros)</span>
+                  )}
                 </div>
-              ) : null;
+              );
             })()}
 
             {/* Input cantidad */}
