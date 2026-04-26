@@ -39,14 +39,26 @@ export default async function ResultadosPage({ params }: Props) {
   }
 
   const rows: ResultRow[] = catalogo.map((a: Articulo) => {
-    const regs       = regsByItem.get(a.itemId) ?? [];
-    const latest     = regs[0]; // registros ya vienen ordenados desc por escaneado_en
-    const contado    = latest ? latest.cantidad : null;
-    const diferencia = contado !== null ? contado - a.stock : null;
-    const valorDif   = diferencia !== null ? Math.abs(diferencia) * a.costo : 0;
-    const clsf: ClsfType = latest ? (latest.clasificacion as ClsfType) : 'NO_CONTADO';
+    const regs = regsByItem.get(a.itemId) ?? [];
+
+    // Suma todos los registros del artículo (cada escaneo = unidades encontradas en esa ubicación).
+    // Un mismo auditor puede haber contado el artículo en varias ubicaciones físicas distintas.
+    const totalContado = regs.length > 0 ? regs.reduce((s, r) => s + r.cantidad, 0) : null;
+    const diferencia   = totalContado !== null ? totalContado - a.stock : null;
+    const valorDif     = diferencia   !== null ? Math.abs(diferencia) * a.costo : 0;
+
+    // Re-clasificar con la cantidad agregada (la columna clasificacion del DB es por registro individual)
+    let clsf: ClsfType = 'NO_CONTADO';
+    if (totalContado !== null) {
+      if (totalContado === 0)            clsf = 'CERO';
+      else if (totalContado === a.stock) clsf = 'SIN_DIF';
+      else if (totalContado > a.stock)   clsf = 'SOBRANTE';
+      else                               clsf = 'FALTANTE';
+    }
+
+    const latest = regs[0]; // metadata (nota, foto, auditor, fecha) del más reciente
     return { itemId: a.itemId, descripcion: a.descripcion, ubicacion: a.ubicacion,
-             stockSist: a.stock, contado, diferencia, costo: a.costo, valorDif, clsf,
+             stockSist: a.stock, contado: totalContado, diferencia, costo: a.costo, valorDif, clsf,
              registroId: latest?.id, nota: latest?.nota,
              fotoUri: latest?.fotoUri, usuarioNombre: latest?.usuarioNombre,
              escaneadoEn: latest?.escaneadoEn,

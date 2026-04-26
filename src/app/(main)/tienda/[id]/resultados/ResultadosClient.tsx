@@ -287,7 +287,7 @@ export default function ResultadosClient({ rows, tiendaNombre, tiendaId, canEdit
           <div className="grid grid-cols-3 gap-2 p-4 border-b border-zinc-800/40 shrink-0">
             {[
               { label: 'Sistema', value: detalleRow.stockSist, color: 'text-zinc-300' },
-              { label: 'Último conteo', value: detalleRow.contado ?? '—', color: 'text-zinc-100 font-black' },
+              { label: 'Total contado', value: detalleRow.contado ?? '—', color: 'text-zinc-100 font-black' },
               { label: 'Diferencia',
                 value: detalleRow.diferencia === null ? '—' : (detalleRow.diferencia > 0 ? `+${detalleRow.diferencia}` : String(detalleRow.diferencia)),
                 color: detalleRow.diferencia === null ? 'text-zinc-500' : detalleRow.diferencia === 0 ? 'text-zinc-400' : detalleRow.diferencia > 0 ? 'text-emerald-400' : 'text-red-400' },
